@@ -1,0 +1,2030 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>AFRIQ — Africa's Wholesale Marketplace</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: { sans: ['Inter', 'sans-serif'] },
+                    colors: {
+                        brand: { 50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7', 400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b' },
+                        gold: { 400: '#fbbf24', 500: '#f59e0b', 600: '#d97706', 700: '#b45309' },
+                        navy: { 50: '#f0f9ff', 100: '#e0f2fe', 600: '#0284c7', 700: '#0369a1', 800: '#075985', 900: '#0c4a6e' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        * { -webkit-tap-highlight-color: transparent; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; overscroll-behavior-y: none; background: #f3f4f6; }
+        .hide-scrollbar::-webkit-scrollbar { display: none; }
+        .hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        .fade-in { animation: fadeIn 0.25s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .slide-up { animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(100%); } to { transform: translateY(0); } }
+        .slide-right { animation: slideRight 0.2s ease-out; }
+        @keyframes slideRight { from { transform: translateX(100%); } to { transform: translateX(0); } }
+        .pulse-soft { animation: pulseSoft 2s infinite; }
+        @keyframes pulseSoft { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
+        .tab-active { color: #059669; }
+        .tab-inactive { color: #9ca3af; }
+        .btn-primary { background: linear-gradient(135deg, #059669 0%, #047857 100%); }
+        .btn-primary:active { transform: scale(0.96); }
+        .btn-gold { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .btn-navy { background: linear-gradient(135deg, #0284c7 0%, #075985 100%); }
+        .escrow-badge { background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); }
+        .verified-badge { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .trust-gold { background: linear-gradient(135deg, #fbbf24 0%, #f59e0b 100%); }
+        .card-press:active { transform: scale(0.97); }
+        input, select, textarea { outline: none; font-family: inherit; }
+        .modal-overlay { background: rgba(0,0,0,0.55); backdrop-filter: blur(6px); }
+        .chat-buyer { background: #ecfdf5; border-bottom-right-radius: 4px; }
+        .chat-seller { background: #f3f4f6; border-bottom-left-radius: 4px; }
+        .step-active { background: linear-gradient(135deg, #059669 0%, #047857 100%); color: white; }
+        .step-done { background: #10b981; color: white; }
+        .step-pending { background: #e5e7eb; color: #9ca3af; }
+        .progress-fill { transition: width 0.8s ease; }
+        .shimmer { background: linear-gradient(90deg, #f3f4f6 25%, #e5e7eb 50%, #f3f4f6 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        .toast-enter { animation: toastEnter 0.3s ease-out; }
+        @keyframes toastEnter { from { transform: translateX(-50%) translateY(-20px); opacity: 0; } to { transform: translateX(-50%) translateY(0); opacity: 1; } }
+        .qty-btn { transition: all 0.15s; }
+        .qty-btn:active { transform: scale(0.9); }
+    </style>
+<base target="_blank">
+</head>
+<body class="bg-gray-100 text-gray-900">
+
+<!-- APP ROOT -->
+<div id="app-root" class="max-w-md mx-auto min-h-screen bg-gray-50 relative shadow-2xl overflow-hidden">
+
+    <!-- HEADER -->
+    <header id="app-header" class="sticky top-0 z-40 bg-white border-b border-gray-100 px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center gap-2.5">
+            <div class="w-9 h-9 rounded-xl btn-primary flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-brand-200">A</div>
+            <div>
+                <h1 class="font-bold text-base leading-tight text-gray-900 tracking-tight">AFRIQ</h1>
+                <p class="text-[9px] text-gray-400 -mt-0.5 font-medium tracking-wide">WHOLESALE MARKETPLACE</p>
+            </div>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="showCart()" class="relative p-2">
+                <i class="fas fa-shopping-cart text-gray-500 text-lg"></i>
+                <span id="cart-badge" class="absolute -top-0.5 -right-0.5 bg-brand-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center hidden">0</span>
+            </button>
+            <button onclick="showNotifications()" class="relative p-2">
+                <i class="fas fa-bell text-gray-500 text-lg"></i>
+                <span id="notif-badge" class="absolute top-0.5 right-0.5 w-2 h-2 bg-red-500 rounded-full"></span>
+            </button>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT -->
+    <main id="main-content" class="pb-24">
+        <!-- Injected by JS -->
+    </main>
+
+    <!-- BOTTOM NAV -->
+    <nav class="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-100 px-2 py-1.5 flex justify-around items-center z-50 max-w-md mx-auto">
+        <button onclick="switchTab('marketplace')" class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-xl transition-all" data-tab="marketplace">
+            <i class="fas fa-store text-[19px]"></i>
+            <span class="text-[10px] font-semibold">Market</span>
+        </button>
+        <button onclick="switchTab('orders')" class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-xl transition-all relative" data-tab="orders">
+            <i class="fas fa-clipboard-list text-[19px]"></i>
+            <span class="text-[10px] font-semibold">Orders</span>
+            <span id="order-badge" class="absolute top-0 right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden">0</span>
+        </button>
+        <button onclick="switchTab('messages')" class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-xl transition-all relative" data-tab="messages">
+            <i class="fas fa-comment-dots text-[19px]"></i>
+            <span class="text-[10px] font-semibold">Messages</span>
+            <span id="msg-badge" class="absolute top-0 right-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full hidden">3</span>
+        </button>
+        <button onclick="switchTab('wallet')" class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-xl transition-all" data-tab="wallet">
+            <i class="fas fa-wallet text-[19px]"></i>
+            <span class="text-[10px] font-semibold">Wallet</span>
+        </button>
+        <button onclick="switchTab('profile')" class="nav-btn flex flex-col items-center gap-0.5 py-1.5 px-4 rounded-xl transition-all" data-tab="profile">
+            <i class="fas fa-user text-[19px]"></i>
+            <span class="text-[10px] font-semibold">Profile</span>
+        </button>
+    </nav>
+
+</div>
+
+<!-- MODAL OVERLAY -->
+<div id="modal-overlay" class="fixed inset-0 modal-overlay z-50 hidden flex items-end sm:items-center justify-center" onclick="closeModal(event)">
+    <div id="modal-content" class="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl max-h-[92vh] overflow-y-auto slide-up" onclick="event.stopPropagation()">
+        <!-- Injected -->
+    </div>
+</div>
+
+<!-- FULL SCREEN PANEL (for cart, checkout, etc) -->
+<div id="fullscreen-panel" class="fixed inset-0 z-50 hidden bg-white slide-right overflow-y-auto">
+    <!-- Injected -->
+</div>
+
+<!-- TOAST -->
+<div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl z-[60] hidden flex items-center gap-2.5 text-sm font-medium toast-enter">
+    <i id="toast-icon" class="fas fa-check-circle text-brand-400"></i>
+    <span id="toast-msg">Success</span>
+</div>
+
+<script>
+// ======================== STATE STORE ========================
+const Store = {
+    user: {
+        name: "Chinedu Okafor",
+        phone: "+234 803 456 7890",
+        email: "chinedu@afriq.com",
+        balance: 2450000,
+        escrowLocked: 850000,
+        trustScore: 94,
+        verified: true,
+        location: "Lagos, Nigeria",
+        businessName: "Okafor Trading Ltd",
+        businessType: "Importer & Distributor",
+        memberSince: "2023",
+        totalDeals: 147,
+        successRate: 98,
+        avatar: "CO",
+        bankName: "GTBank",
+        accountNumber: "0123456789"
+    },
+    categories: [
+        { id: 'all', name: 'All', icon: 'fa-th-large' },
+        { id: 'textiles', name: 'Textiles', icon: 'fa-tshirt' },
+        { id: 'electronics', name: 'Electronics', icon: 'fa-mobile-alt' },
+        { id: 'agriculture', name: 'Agriculture', icon: 'fa-seedling' },
+        { id: 'beauty', name: 'Beauty', icon: 'fa-spa' },
+        { id: 'home', name: 'Home', icon: 'fa-couch' },
+        { id: 'auto', name: 'Auto Parts', icon: 'fa-car' },
+        { id: 'food', name: 'Food', icon: 'fa-utensils' },
+        { id: 'construction', name: 'Construction', icon: 'fa-hard-hat' },
+        { id: 'fashion', name: 'Fashion', icon: 'fa-tshirt' }
+    ],
+    products: [
+        {
+            id: 1, name: "Premium Hollandais Ankara Wax Fabrics", category: "textiles",
+            price: 4200, moq: 50, unit: "yards", stock: 5000, supplier: "Aba Textile Hub",
+            supplierTrust: 97, supplierDeals: 2340, location: "Aba, Abia", supplierId: "sup_001",
+            image: "https://images.unsplash.com/photo-1558171813-4c088753af8f?w=400&h=400&fit=crop",
+            rating: 4.8, reviews: 128, sold: 3420,
+            description: "Original Hollandais wax prints. Vibrant colors, durable cotton. Perfect for fashion designers and retail shops. Bulk pricing available for 500+ yards.",
+            variants: [{name: "Blue/Gold", sku: "ANK-BG"}, {name: "Red/Green", sku: "ANK-RG"}, {name: "Purple/Yellow", sku: "ANK-PY"}, {name: "Black/White", sku: "ANK-BW"}, {name: "Orange/Navy", sku: "ANK-ON"}],
+            delivery: "3-5 days", escrow: true, minOrder: 50,
+            bulkPricing: [{qty: 100, price: 4000}, {qty: 500, price: 3800}, {qty: 1000, price: 3500}]
+        },
+        {
+            id: 2, name: "Samsung Galaxy A14 5G — 64GB Bulk", category: "electronics",
+            price: 85000, moq: 10, unit: "pieces", stock: 350, supplier: "Alaba Direct Electronics",
+            supplierTrust: 91, supplierDeals: 890, location: "Alaba, Lagos", supplierId: "sup_002",
+            image: "https://images.unsplash.com/photo-1592899677977-9c10ca588bbd?w=400&h=400&fit=crop",
+            rating: 4.6, reviews: 64, sold: 890,
+            description: "Brand new Samsung Galaxy A14 5G. 64GB storage, 4GB RAM. Sealed boxes with 1-year warranty. Perfect for phone retailers and corporate bulk orders.",
+            variants: [{name: "Black", sku: "SAM-BLK"}, {name: "Green", sku: "SAM-GRN"}, {name: "Silver", sku: "SAM-SLV"}],
+            delivery: "Same day (Lagos)", escrow: true, minOrder: 10,
+            bulkPricing: [{qty: 50, price: 82000}, {qty: 100, price: 79000}]
+        },
+        {
+            id: 3, name: "Nigerian Long Grain Rice — 50kg Bags", category: "agriculture",
+            price: 42000, moq: 20, unit: "bags", stock: 2000, supplier: "Kebbi Farms Cooperative",
+            supplierTrust: 95, supplierDeals: 1560, location: "Birnin Kebbi", supplierId: "sup_003",
+            image: "https://images.unsplash.com/photo-1586201375761-83865001e31c?w=400&h=400&fit=crop",
+            rating: 4.9, reviews: 312, sold: 5600,
+            description: "Premium long grain rice. Direct from farmers in Kebbi State. 50kg bags. Fresh harvest. Stone-free, sorted. Delivery nationwide via AFRIQ logistics.",
+            variants: [{name: "Standard", sku: "RICE-STD"}, {name: "Premium Organic", sku: "RICE-ORG"}],
+            delivery: "5-7 days", escrow: true, minOrder: 20,
+            bulkPricing: [{qty: 100, price: 40000}, {qty: 500, price: 38000}]
+        },
+        {
+            id: 4, name: "Brazilian Human Hair Bundles — 100% Virgin", category: "beauty",
+            price: 35000, moq: 5, unit: "bundles", stock: 800, supplier: "Lekki Beauty Wholesale",
+            supplierTrust: 88, supplierDeals: 430, location: "Lekki, Lagos", supplierId: "sup_004",
+            image: "https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=400&fit=crop",
+            rating: 4.7, reviews: 89, sold: 1200,
+            description: "100% unprocessed Brazilian virgin human hair. Can be dyed, bleached, and styled. Double weft, no shedding. 12-30 inches available in all textures.",
+            variants: [{name: "Body Wave", sku: "HAIR-BW"}, {name: "Straight", sku: "HAIR-ST"}, {name: "Deep Curl", sku: "HAIR-DC"}, {name: "Kinky Curly", sku: "HAIR-KC"}],
+            delivery: "2-3 days", escrow: true, minOrder: 5,
+            bulkPricing: [{qty: 20, price: 32000}, {qty: 50, price: 29000}]
+        },
+        {
+            id: 5, name: "Heavy-Duty Plastic Event Chairs", category: "home",
+            price: 2800, moq: 100, unit: "pieces", stock: 5000, supplier: "Onitsha Plastics Ltd",
+            supplierTrust: 92, supplierDeals: 2100, location: "Onitsha, Anambra", supplierId: "sup_005",
+            image: "https://images.unsplash.com/photo-1506439773649-6e0eb8cfb5f0?w=400&h=400&fit=crop",
+            rating: 4.5, reviews: 256, sold: 8900,
+            description: "Heavy-duty event chairs. Stackable up to 50 units. UV resistant, weather-proof. Perfect for event centers, churches, schools, and rental businesses.",
+            variants: [{name: "White", sku: "CHR-WHT"}, {name: "Blue", sku: "CHR-BLU"}, {name: "Red", sku: "CHR-RED"}, {name: "Gold", sku: "CHR-GLD"}],
+            delivery: "3-4 days", escrow: true, minOrder: 100,
+            bulkPricing: [{qty: 500, price: 2600}, {qty: 1000, price: 2400}]
+        },
+        {
+            id: 6, name: "Genuine Toyota Brake Pads — OEM", category: "auto",
+            price: 15000, moq: 20, unit: "sets", stock: 600, supplier: "Ladipo Spare Parts Hub",
+            supplierTrust: 89, supplierDeals: 780, location: "Ladipo, Lagos", supplierId: "sup_006",
+            image: "https://images.unsplash.com/photo-1486262715619-67b85e0b08d3?w=400&h=400&fit=crop",
+            rating: 4.6, reviews: 145, sold: 2100,
+            description: "Genuine OEM Toyota brake pads. Fits Corolla, Camry, RAV4, Highlander. Asbestos-free. Bulk pricing for mechanics and auto parts dealers.",
+            variants: [{name: "Corolla 2008-2013", sku: "BRK-COR1"}, {name: "Corolla 2014+", sku: "BRK-COR2"}, {name: "Camry 2012+", sku: "BRK-CAM"}, {name: "RAV4 All Models", sku: "BRK-RAV"}],
+            delivery: "1-2 days (Lagos)", escrow: true, minOrder: 20,
+            bulkPricing: [{qty: 100, price: 13500}]
+        },
+        {
+            id: 7, name: "Pure Red Palm Oil — 25L Jerrycans", category: "food",
+            price: 18000, moq: 30, unit: "cans", stock: 1200, supplier: "Delta Palm Oil Mill",
+            supplierTrust: 96, supplierDeals: 1890, location: "Warri, Delta", supplierId: "sup_007",
+            image: "https://images.unsplash.com/photo-1596040033229-a9821ebd058d?w=400&h=400&fit=crop",
+            rating: 4.9, reviews: 203, sold: 4500,
+            description: "100% pure red palm oil. Cold pressed, no additives. 25L jerrycans. Direct from mill in Delta State. Export quality. Perfect for restaurants and food processors.",
+            variants: [{name: "Standard Grade", sku: "OIL-STD"}, {name: "Premium Organic", sku: "OIL-ORG"}],
+            delivery: "4-6 days", escrow: true, minOrder: 30,
+            bulkPricing: [{qty: 100, price: 17000}, {qty: 500, price: 16000}]
+        },
+        {
+            id: 8, name: "32-inch Smart LED TV — Android OS", category: "electronics",
+            price: 65000, moq: 5, unit: "units", stock: 200, supplier: "Alaba Direct Electronics",
+            supplierTrust: 91, supplierDeals: 890, location: "Alaba, Lagos", supplierId: "sup_002",
+            image: "https://images.unsplash.com/photo-1593359677879-a4bb92f829d1?w=400&h=400&fit=crop",
+            rating: 4.4, reviews: 52, sold: 340,
+            description: "32-inch Smart LED TV with Android OS. Netflix, YouTube, DSTV Now pre-installed. HD display. Perfect for hotels, offices, and retail electronics shops.",
+            variants: [{name: "32 inch", sku: "TV-32"}, {name: "43 inch", sku: "TV-43"}, {name: "55 inch", sku: "TV-55"}],
+            delivery: "Same day (Lagos)", escrow: true, minOrder: 5,
+            bulkPricing: [{qty: 20, price: 62000}, {qty: 50, price: 58000}]
+        },
+        {
+            id: 9, name: "Portland Cement — Dangote 50kg", category: "construction",
+            price: 5200, moq: 100, unit: "bags", stock: 10000, supplier: "Dangote Direct Partners",
+            supplierTrust: 99, supplierDeals: 5600, location: "Ibeshe, Ogun", supplierId: "sup_008",
+            image: "https://images.unsplash.com/photo-1504307651254-35680f356dfd?w=400&h=400&fit=crop",
+            rating: 4.9, reviews: 890, sold: 45000,
+            description: "Dangote Portland cement 50kg bags. Grade 42.5R. Direct from factory. Minimum 100 bags. Delivery with AFRIQ logistics. Perfect for construction companies and block makers.",
+            variants: [{name: "42.5R Standard", sku: "CEM-STD"}],
+            delivery: "1-3 days", escrow: true, minOrder: 100,
+            bulkPricing: [{qty: 500, price: 5000}, {qty: 1000, price: 4800}]
+        },
+        {
+            id: 10, name: "Men's Plain T-Shirts — Cotton Bulk", category: "fashion",
+            price: 1200, moq: 200, unit: "pieces", stock: 8000, supplier: "Aba Garment Cluster",
+            supplierTrust: 90, supplierDeals: 1200, location: "Aba, Abia", supplierId: "sup_001",
+            image: "https://images.unsplash.com/photo-1521572163474-6863f1d88fbf?w=400&h=400&fit=crop",
+            rating: 4.5, reviews: 178, sold: 5600,
+            description: "High-quality cotton plain t-shirts. Round neck and V-neck available. Perfect for screen printing, branding, and retail. All sizes from S to XXL.",
+            variants: [{name: "White", sku: "TSH-WHT"}, {name: "Black", sku: "TSH-BLK"}, {name: "Navy", sku: "TSH-NVY"}, {name: "Red", sku: "TSH-RED"}],
+            delivery: "3-5 days", escrow: true, minOrder: 200,
+            bulkPricing: [{qty: 500, price: 1100}, {qty: 1000, price: 1000}]
+        }
+    ],
+    cart: [],
+    orders: [
+        {
+            id: "ORD-240709-001", productId: 2, productName: "Samsung Galaxy A14 5G — 64GB Bulk",
+            supplier: "Alaba Direct Electronics", supplierId: "sup_002",
+            quantity: 15, unitPrice: 85000, totalAmount: 1275000, escrowFee: 31875,
+            grandTotal: 1306875, deliveryFee: 35000, variant: "Black",
+            status: "shipped", progress: 60, createdAt: "Jul 9, 2024",
+            deliveryDate: "Jul 12, 2024", trackingId: "AFQ-TRK-445-LGS",
+            steps: [{name: "Order Placed", done: true}, {name: "Payment Confirmed", done: true}, {name: "Shipped", done: true, current: true}, {name: "In Transit", done: false}, {name: "Delivered", done: false}, {name: "Completed", done: false}]
+        },
+        {
+            id: "ORD-240708-002", productId: 1, productName: "Premium Hollandais Ankara Wax Fabrics",
+            supplier: "Aba Textile Hub", supplierId: "sup_001",
+            quantity: 200, unitPrice: 4200, totalAmount: 840000, escrowFee: 21000,
+            grandTotal: 861000, deliveryFee: 25000, variant: "Blue/Gold",
+            status: "delivered", progress: 80, createdAt: "Jul 8, 2024",
+            deliveryDate: "Jul 11, 2024", trackingId: "AFQ-TRK-332-ABA",
+            steps: [{name: "Order Placed", done: true}, {name: "Payment Confirmed", done: true}, {name: "Shipped", done: true}, {name: "In Transit", done: true}, {name: "Delivered", done: true, current: true}, {name: "Completed", done: false}]
+        },
+        {
+            id: "ORD-240705-003", productId: 3, productName: "Nigerian Long Grain Rice — 50kg Bags",
+            supplier: "Kebbi Farms Cooperative", supplierId: "sup_003",
+            quantity: 50, unitPrice: 42000, totalAmount: 2100000, escrowFee: 52500,
+            grandTotal: 2152500, deliveryFee: 45000, variant: "Standard",
+            status: "completed", progress: 100, createdAt: "Jul 5, 2024",
+            deliveryDate: "Jul 10, 2024", trackingId: "AFQ-TRK-118-KBB",
+            steps: [{name: "Order Placed", done: true}, {name: "Payment Confirmed", done: true}, {name: "Shipped", done: true}, {name: "In Transit", done: true}, {name: "Delivered", done: true}, {name: "Completed", done: true}]
+        }
+    ],
+    conversations: [
+        {
+            id: 1, with: "Aba Textile Hub", avatar: "AT", online: true, supplierId: "sup_001",
+            lastMessage: "Yes, we can do 200 yards at ₦4,200/yard. Escrow accepted.", time: "2m ago", unread: 2,
+            messages: [
+                { sender: "me", text: "Hi, do you have Hollandais in stock?", time: "10:30 AM", type: "text" },
+                { sender: "them", text: "Yes, all variants available. What's your quantity?", time: "10:32 AM", type: "text" },
+                { sender: "me", text: "I need 200 yards for my shop in Lagos", time: "10:35 AM", type: "text" },
+                { sender: "them", text: "Yes, we can do 200 yards at ₦4,200/yard. Escrow accepted.", time: "10:38 AM", type: "text" }
+            ]
+        },
+        {
+            id: 2, with: "Alaba Direct Electronics", avatar: "AD", online: false, supplierId: "sup_002",
+            lastMessage: "Your order #ORD-240709-001 has been shipped. Tracking: AFQ-TRK-445-LGS", time: "1h ago", unread: 1,
+            messages: [
+                { sender: "them", text: "Your order #ORD-240709-001 has been shipped. Tracking: AFQ-TRK-445-LGS", time: "9:15 AM", type: "order" }
+            ]
+        },
+        {
+            id: 3, with: "Kebbi Farms Cooperative", avatar: "KF", online: true, supplierId: "sup_003",
+            lastMessage: "The rice harvest just came in. Fresh bags ready for bulk orders.", time: "3h ago", unread: 0,
+            messages: [
+                { sender: "them", text: "The rice harvest just came in. Fresh bags ready for bulk orders.", time: "7:30 AM", type: "text" }
+            ]
+        }
+    ],
+    transactions: [
+        { id: "TXN-240710-001", type: "deposit", amount: 500000, desc: "Bank Transfer — GTBank", date: "Today, 9:00 AM", status: "completed", balance: 2450000 },
+        { id: "TXN-240709-002", type: "escrow_lock", amount: 1306875, desc: "Escrow ORD-240709-001 — Samsung A14", date: "Yesterday, 2:30 PM", status: "pending", balance: 1950000 },
+        { id: "TXN-240708-003", type: "release", amount: 861000, desc: "Released to Aba Textile Hub", date: "Jul 8, 6:00 PM", status: "completed", balance: 1950000 },
+        { id: "TXN-240708-004", type: "fee", amount: 21000, desc: "Escrow Fee (2.5%) — ORD-240708-002", date: "Jul 8, 6:00 PM", status: "completed", balance: 1950000 },
+        { id: "TXN-240705-005", type: "deposit", amount: 1200000, desc: "Cash Deposit — AFRIQ Agent", date: "Jul 5, 4:15 PM", status: "completed", balance: 1200000 },
+        { id: "TXN-240703-006", type: "withdrawal", amount: 200000, desc: "Bank Transfer Out — GTBank", date: "Jul 3, 10:00 AM", status: "completed", balance: 1000000 }
+    ],
+    notifications: [
+        { id: 1, title: "Escrow Shipped", desc: "Your order ORD-240709-001 has been shipped by Alaba Direct Electronics", time: "2 hours ago", read: false, type: "shipping", icon: "fa-truck", color: "bg-blue-50 text-blue-600" },
+        { id: 2, title: "Deposit Received", desc: "₦500,000 deposited via GTBank transfer", time: "Today, 9:00 AM", read: false, type: "deposit", icon: "fa-wallet", color: "bg-green-50 text-green-600" },
+        { id: 3, title: "New Message", desc: "Aba Textile Hub: Yes, we can do 200 yards at ₦4,200/yard", time: "Today, 10:38 AM", read: true, type: "message", icon: "fa-comment", color: "bg-purple-50 text-purple-600" },
+        { id: 4, title: "Delivery Confirmed", desc: "Your order ORD-240708-002 has been delivered. Confirm to release escrow.", time: "Yesterday, 4:15 PM", read: false, type: "delivery", icon: "fa-box", color: "bg-gold-500/10 text-gold-600" }
+    ],
+    currentTab: 'marketplace',
+    selectedCategory: 'all',
+    searchQuery: '',
+    sortBy: 'featured'
+};
+
+// ======================== UTILITIES ========================
+const fmt = (n) => '₦' + n.toLocaleString('en-NG');
+const fmtShort = (n) => n >= 1000000 ? '₦' + (n/1000000).toFixed(1) + 'M' : n >= 1000 ? '₦' + (n/1000).toFixed(1) + 'K' : '₦' + n;
+
+function showToast(msg, icon = 'fa-check-circle', type = 'success') {
+    const t = document.getElementById('toast');
+    const i = document.getElementById('toast-icon');
+    const m = document.getElementById('toast-msg');
+    m.textContent = msg;
+    i.className = `fas ${icon} ${type === 'success' ? 'text-brand-400' : type === 'error' ? 'text-red-400' : 'text-gold-400'}`;
+    t.classList.remove('hidden');
+    t.classList.add('toast-enter');
+    setTimeout(() => { t.classList.add('hidden'); t.classList.remove('toast-enter'); }, 2800);
+}
+
+function openModal(html) {
+    document.getElementById('modal-content').innerHTML = html;
+    document.getElementById('modal-overlay').classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closeModal(e) {
+    if (!e || e.target.id === 'modal-overlay') {
+        document.getElementById('modal-overlay').classList.add('hidden');
+        document.body.style.overflow = '';
+    }
+}
+
+function openPanel(html) {
+    const panel = document.getElementById('fullscreen-panel');
+    panel.innerHTML = html;
+    panel.classList.remove('hidden');
+    document.body.style.overflow = 'hidden';
+}
+
+function closePanel() {
+    document.getElementById('fullscreen-panel').classList.add('hidden');
+    document.body.style.overflow = '';
+}
+
+function updateBadges() {
+    const cartCount = Store.cart.reduce((s, i) => s + i.qty, 0);
+    const cartBadge = document.getElementById('cart-badge');
+    if (cartCount > 0) { cartBadge.textContent = cartCount; cartBadge.classList.remove('hidden'); }
+    else cartBadge.classList.add('hidden');
+
+    const orderBadge = document.getElementById('order-badge');
+    const activeOrders = Store.orders.filter(o => o.status !== 'completed').length;
+    if (activeOrders > 0) { orderBadge.textContent = activeOrders; orderBadge.classList.remove('hidden'); }
+    else orderBadge.classList.add('hidden');
+
+    const msgBadge = document.getElementById('msg-badge');
+    const unread = Store.conversations.reduce((s, c) => s + c.unread, 0);
+    if (unread > 0) { msgBadge.textContent = unread; msgBadge.classList.remove('hidden'); }
+    else msgBadge.classList.add('hidden');
+}
+
+// ======================== TABS ========================
+function switchTab(tab) {
+    Store.currentTab = tab;
+    document.querySelectorAll('.nav-btn').forEach(btn => {
+        const isActive = btn.dataset.tab === tab;
+        btn.classList.toggle('tab-active', isActive);
+        btn.classList.toggle('tab-inactive', !isActive);
+        btn.querySelector('i').classList.toggle('text-brand-600', isActive);
+    });
+    if (tab === 'marketplace') renderMarketplace();
+    else if (tab === 'orders') renderOrders();
+    else if (tab === 'messages') renderMessages();
+    else if (tab === 'wallet') renderWallet();
+    else if (tab === 'profile') renderProfile();
+    updateBadges();
+}
+
+// ======================== MARKETPLACE ========================
+function renderMarketplace() {
+    let filtered = Store.products.filter(p => {
+        const catMatch = Store.selectedCategory === 'all' || p.category === Store.selectedCategory;
+        const searchMatch = !Store.searchQuery || p.name.toLowerCase().includes(Store.searchQuery.toLowerCase()) || p.supplier.toLowerCase().includes(Store.searchQuery.toLowerCase());
+        return catMatch && searchMatch;
+    });
+
+    if (Store.sortBy === 'price_low') filtered.sort((a, b) => a.price - b.price);
+    else if (Store.sortBy === 'price_high') filtered.sort((a, b) => b.price - a.price);
+    else if (Store.sortBy === 'rating') filtered.sort((a, b) => b.rating - a.rating);
+    else if (Store.sortBy === 'sold') filtered.sort((a, b) => b.sold - a.sold);
+
+    let html = `
+        <div class="fade-in">
+            <!-- Hero Banner -->
+            <div class="mx-4 mt-3 rounded-2xl overflow-hidden relative h-36 bg-gradient-to-br from-brand-600 to-brand-800 shadow-lg shadow-brand-200">
+                <div class="absolute inset-0 opacity-20" style="background-image: url('https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=600&fit=crop'); background-size: cover; background-position: center;"></div>
+                <div class="relative p-5 h-full flex flex-col justify-center">
+                    <span class="text-brand-200 text-[10px] font-bold tracking-wider uppercase mb-1">Trusted Wholesale</span>
+                    <h2 class="text-white font-bold text-xl leading-tight mb-1">Buy Safe with<br>AFRIQ Escrow</h2>
+                    <p class="text-brand-100 text-xs">Your money is protected until delivery</p>
+                </div>
+                <div class="absolute bottom-3 right-3 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center backdrop-blur">
+                    <i class="fas fa-shield-alt text-white text-lg"></i>
+                </div>
+            </div>
+
+            <!-- Search & Filter -->
+            <div class="px-4 py-3 sticky top-[60px] bg-gray-50 z-30">
+                <div class="relative mb-2.5">
+                    <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                    <input type="text" placeholder="Search products, suppliers, categories..." 
+                        class="w-full bg-white border border-gray-200 rounded-xl py-3 pl-11 pr-4 text-sm shadow-sm focus:ring-2 focus:ring-brand-200 focus:border-brand-300 transition-all"
+                        oninput="Store.searchQuery=this.value;renderMarketplace()">
+                </div>
+                <div class="flex gap-2">
+                    <select onchange="Store.sortBy=this.value;renderMarketplace()" class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-gray-600 focus:ring-2 focus:ring-brand-200 outline-none">
+                        <option value="featured">Featured</option>
+                        <option value="price_low">Price: Low to High</option>
+                        <option value="price_high">Price: High to Low</option>
+                        <option value="rating">Top Rated</option>
+                        <option value="sold">Best Selling</option>
+                    </select>
+                    <button onclick="toggleFilterModal()" class="bg-white border border-gray-200 rounded-lg px-3 py-2 text-xs font-medium text-gray-600 flex items-center gap-1.5">
+                        <i class="fas fa-filter text-[10px]"></i> Filter
+                    </button>
+                </div>
+            </div>
+
+            <!-- Categories -->
+            <div class="flex gap-2 px-4 py-2 overflow-x-auto hide-scrollbar">
+                ${Store.categories.map(c => `
+                    <button onclick="Store.selectedCategory='${c.id}';renderMarketplace()"
+                        class="flex items-center gap-1.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold whitespace-nowrap transition-all shadow-sm ${Store.selectedCategory===c.id?'bg-brand-600 text-white shadow-brand-200':'bg-white text-gray-600 border border-gray-200'}">
+                        <i class="fas ${c.icon}"></i>
+                        ${c.name}
+                    </button>
+                `).join('')}
+            </div>
+
+            <!-- Products Grid -->
+            <div class="px-4 py-2 grid grid-cols-2 gap-3">
+                ${filtered.map(p => `
+                    <div class="card-press bg-white rounded-2xl border border-gray-100 overflow-hidden shadow-sm" onclick="showProduct(${p.id})">
+                        <div class="relative aspect-square bg-gray-100">
+                            <img src="${p.image}" class="w-full h-full object-cover" loading="lazy" alt="${p.name}">
+                            <div class="absolute top-2 left-2 flex flex-col gap-1">
+                                <span class="escrow-badge text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">ESCROW</span>
+                                ${p.stock < 500 ? `<span class="bg-red-500 text-white text-[9px] font-bold px-2 py-0.5 rounded-full shadow-sm">LOW STOCK</span>` : ''}
+                            </div>
+                            <div class="absolute bottom-2 right-2 bg-white/90 backdrop-blur-sm text-gray-700 text-[10px] font-bold px-2 py-1 rounded-lg shadow-sm flex items-center gap-1">
+                                <i class="fas fa-star text-gold-500 text-[9px]"></i>${p.rating}
+                            </div>
+                        </div>
+                        <div class="p-3">
+                            <h3 class="text-xs font-bold text-gray-900 line-clamp-2 leading-tight mb-1 h-8">${p.name}</h3>
+                            <div class="flex items-center gap-1.5 mb-2">
+                                <div class="w-5 h-5 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 text-[8px] font-bold">${p.supplier.split(' ').map(x=>x[0]).join('').substring(0,2)}</div>
+                                <p class="text-[10px] text-gray-400 truncate">${p.supplier} · ${p.location}</p>
+                            </div>
+                            <div class="flex items-end justify-between">
+                                <div>
+                                    <p class="text-sm font-bold text-brand-700">${fmt(p.price)}</p>
+                                    <p class="text-[9px] text-gray-400">MOQ ${p.moq} ${p.unit}</p>
+                                </div>
+                                <div class="flex items-center gap-0.5 text-[10px] font-bold text-brand-700 bg-brand-50 px-2 py-1 rounded-lg">
+                                    <i class="fas fa-shield-alt text-[8px]"></i> ${p.supplierTrust}
+                                </div>
+                            </div>
+                            <div class="mt-2 pt-2 border-t border-gray-50 flex items-center justify-between text-[9px] text-gray-400">
+                                <span><i class="fas fa-fire text-red-400 mr-0.5"></i>${p.sold.toLocaleString()} sold</span>
+                                <span>${p.delivery}</span>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            ${filtered.length === 0 ? `
+                <div class="text-center py-16 px-4">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-search text-gray-400 text-2xl"></i>
+                    </div>
+                    <p class="text-sm font-semibold text-gray-600 mb-1">No products found</p>
+                    <p class="text-xs text-gray-400">Try adjusting your search or filters</p>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    document.getElementById('main-content').innerHTML = html;
+}
+
+function toggleFilterModal() {
+    openModal(`
+        <div class="p-5">
+            <h3 class="font-bold text-lg mb-4">Filter Products</h3>
+            <div class="space-y-4 mb-6">
+                <div>
+                    <p class="text-xs font-semibold text-gray-700 mb-2">Price Range</p>
+                    <div class="flex gap-2">
+                        <input type="number" placeholder="Min" class="flex-1 bg-gray-100 rounded-lg px-3 py-2.5 text-sm">
+                        <input type="number" placeholder="Max" class="flex-1 bg-gray-100 rounded-lg px-3 py-2.5 text-sm">
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-gray-700 mb-2">Minimum Trust Score</p>
+                    <div class="flex gap-2 flex-wrap">
+                        ${[80,85,90,95].map(s => `<button class="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-600">${s}+</button>`).join('')}
+                    </div>
+                </div>
+                <div>
+                    <p class="text-xs font-semibold text-gray-700 mb-2">Delivery Time</p>
+                    <div class="flex gap-2 flex-wrap">
+                        ${['Same Day','1-2 Days','3-5 Days','1 Week+'].map(d => `<button class="px-3 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-600">${d}</button>`).join('')}
+                    </div>
+                </div>
+            </div>
+            <button onclick="closeModal();showToast('Filters applied')" class="w-full btn-primary text-white font-bold py-3.5 rounded-xl mb-2">Apply Filters</button>
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium">Cancel</button>
+        </div>
+    `);
+}
+
+// ======================== PRODUCT DETAIL ========================
+function showProduct(id) {
+    const p = Store.products.find(x => x.id === id);
+    const inCart = Store.cart.find(c => c.productId === id);
+
+    openModal(`
+        <div class="relative">
+            <button onclick="closeModal()" class="absolute top-4 right-4 z-10 w-9 h-9 bg-black/50 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/70 transition-all">
+                <i class="fas fa-times text-sm"></i>
+            </button>
+            <div class="aspect-square bg-gray-100 relative">
+                <img src="${p.image}" class="w-full h-full object-cover" alt="${p.name}">
+                <div class="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/70 to-transparent p-4">
+                    <div class="flex items-center gap-2">
+                        <span class="escrow-badge text-white text-[10px] font-bold px-2.5 py-1 rounded-full">ESCROW PROTECTED</span>
+                        <span class="verified-badge text-white text-[10px] font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
+                            <i class="fas fa-check-circle text-[8px]"></i> VERIFIED SUPPLIER
+                        </span>
+                    </div>
+                </div>
+            </div>
+            <div class="p-5">
+                <div class="flex items-start justify-between mb-2">
+                    <h2 class="text-lg font-bold text-gray-900 leading-tight flex-1 pr-2">${p.name}</h2>
+                    <div class="flex items-center gap-0.5 bg-gold-500/10 px-2 py-1 rounded-lg">
+                        <i class="fas fa-star text-gold-500 text-[10px]"></i>
+                        <span class="text-xs font-bold text-gold-700">${p.rating}</span>
+                        <span class="text-[10px] text-gray-400">(${p.reviews})</span>
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-2 mb-3">
+                    <span class="text-xl font-bold text-brand-700">${fmt(p.price)}</span>
+                    <span class="text-xs text-gray-400">/ ${p.unit}</span>
+                    <span class="text-xs text-gray-400">· MOQ ${p.moq} ${p.unit}</span>
+                </div>
+
+                <div class="flex items-center gap-3 p-3 bg-gray-50 rounded-xl mb-4 border border-gray-100">
+                    <div class="w-11 h-11 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xs">
+                        ${p.supplier.split(' ').map(x=>x[0]).join('').substring(0,2)}
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-bold text-gray-900">${p.supplier}</p>
+                        <div class="flex items-center gap-2 text-[10px] text-gray-500 mt-0.5">
+                            <span><i class="fas fa-map-marker-alt mr-0.5"></i>${p.location}</span>
+                            <span>·</span>
+                            <span class="text-brand-600 font-bold">${p.supplierTrust} Trust</span>
+                            <span>·</span>
+                            <span>${p.supplierDeals.toLocaleString()} deals</span>
+                        </div>
+                    </div>
+                    <button onclick="startChat('${p.supplierId}')" class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 hover:bg-brand-200 transition-all">
+                        <i class="fas fa-comment text-sm"></i>
+                    </button>
+                </div>
+
+                <p class="text-sm text-gray-600 mb-4 leading-relaxed">${p.description}</p>
+
+                <div class="mb-4">
+                    <p class="text-xs font-bold text-gray-700 mb-2">Select Variant</p>
+                    <div class="flex flex-wrap gap-2" id="variant-selector">
+                        ${p.variants.map((v, i) => `
+                            <button onclick="selectVariant(this, '${v.name}')" class="variant-btn px-3.5 py-2 bg-gray-100 rounded-lg text-xs font-medium text-gray-700 border-2 border-transparent hover:bg-gray-200 transition-all ${i===0?'selected-variant bg-brand-50 border-brand-500 text-brand-700':''}">
+                                ${v.name}
+                            </button>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="mb-4">
+                    <p class="text-xs font-bold text-gray-700 mb-2">Quantity (${p.unit})</p>
+                    <div class="flex items-center gap-3">
+                        <button onclick="adjustQty(-1, ${p.moq})" class="qty-btn w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 font-bold text-lg">−</button>
+                        <input type="number" id="product-qty" value="${p.moq}" min="${p.moq}" class="w-20 text-center font-bold text-lg bg-gray-50 rounded-xl py-2 border border-gray-200" readonly>
+                        <button onclick="adjustQty(1, ${p.moq})" class="qty-btn w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center text-gray-600 font-bold text-lg">+</button>
+                        <span class="text-xs text-gray-400 ml-2">${p.stock.toLocaleString()} available</span>
+                    </div>
+                </div>
+
+                <div class="mb-4 p-3 bg-brand-50 rounded-xl border border-brand-100">
+                    <p class="text-xs font-bold text-brand-800 mb-1.5">Bulk Pricing</p>
+                    <div class="space-y-1">
+                        ${p.bulkPricing.map(b => `
+                            <div class="flex justify-between text-xs">
+                                <span class="text-brand-600">${b.qty}+ ${p.unit}</span>
+                                <span class="font-bold text-brand-800">${fmt(b.price)} / ${p.unit}</span>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="flex items-center gap-4 text-xs text-gray-500 mb-6 pb-4 border-b border-gray-100">
+                    <span class="flex items-center gap-1"><i class="fas fa-truck text-brand-500"></i>${p.delivery}</span>
+                    <span class="flex items-center gap-1"><i class="fas fa-undo text-brand-500"></i>Escrow refund</span>
+                    <span class="flex items-center gap-1"><i class="fas fa-shield-alt text-brand-500"></i>Verified</span>
+                </div>
+
+                <div class="flex gap-3">
+                    <button onclick="addToCart(${p.id})" class="flex-1 bg-gray-900 text-white font-bold py-3.5 rounded-xl shadow-lg active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-shopping-cart"></i>
+                        ${inCart ? 'Update Cart' : 'Add to Cart'}
+                    </button>
+                    <button onclick="buyNow(${p.id})" class="flex-1 btn-primary text-white font-bold py-3.5 rounded-xl shadow-lg shadow-brand-200 active:scale-[0.98] transition-all flex items-center justify-center gap-2">
+                        <i class="fas fa-lock"></i>Buy Now
+                    </button>
+                </div>
+            </div>
+        </div>
+    `);
+}
+
+function selectVariant(btn, name) {
+    document.querySelectorAll('.variant-btn').forEach(b => {
+        b.classList.remove('selected-variant', 'bg-brand-50', 'border-brand-500', 'text-brand-700');
+        b.classList.add('bg-gray-100', 'border-transparent', 'text-gray-700');
+    });
+    btn.classList.remove('bg-gray-100', 'border-transparent', 'text-gray-700');
+    btn.classList.add('selected-variant', 'bg-brand-50', 'border-brand-500', 'text-brand-700');
+}
+
+function adjustQty(delta, moq) {
+    const input = document.getElementById('product-qty');
+    let val = parseInt(input.value) + delta;
+    if (val < moq) val = moq;
+    input.value = val;
+}
+
+function addToCart(productId) {
+    const p = Store.products.find(x => x.id === productId);
+    const qty = parseInt(document.getElementById('product-qty')?.value || p.moq);
+    const selectedVariant = document.querySelector('.selected-variant')?.textContent.trim() || p.variants[0].name;
+
+    const existing = Store.cart.find(c => c.productId === productId && c.variant === selectedVariant);
+    if (existing) {
+        existing.qty = qty;
+    } else {
+        Store.cart.push({
+            productId, name: p.name, price: p.price, qty, unit: p.unit,
+            variant: selectedVariant, supplier: p.supplier, supplierId: p.supplierId,
+            image: p.image, delivery: p.delivery, moq: p.moq
+        });
+    }
+
+    updateBadges();
+    closeModal();
+    showToast('Added to cart', 'fa-shopping-cart');
+}
+
+function buyNow(productId) {
+    addToCart(productId);
+    setTimeout(() => showCart(), 300);
+}
+
+// ======================== CART ========================
+function showCart() {
+    if (Store.cart.length === 0) {
+        openPanel(`
+            <div class="min-h-screen bg-gray-50 flex flex-col">
+                <div class="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 z-10">
+                    <button onclick="closePanel()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+                        <i class="fas fa-arrow-left"></i>
+                    </button>
+                    <h2 class="font-bold text-lg">Shopping Cart</h2>
+                </div>
+                <div class="flex-1 flex flex-col items-center justify-center px-4">
+                    <div class="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
+                        <i class="fas fa-shopping-cart text-gray-300 text-3xl"></i>
+                    </div>
+                    <p class="text-sm font-bold text-gray-600 mb-1">Your cart is empty</p>
+                    <p class="text-xs text-gray-400 mb-6 text-center">Add products to start your wholesale order</p>
+                    <button onclick="closePanel();switchTab('marketplace')" class="btn-primary text-white font-bold px-8 py-3 rounded-xl">Browse Marketplace</button>
+                </div>
+            </div>
+        `);
+        return;
+    }
+
+    const subtotal = Store.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const escrowFee = Math.round(subtotal * 0.025);
+    const deliveryFee = Store.cart.length * 25000;
+    const grandTotal = subtotal + escrowFee + deliveryFee;
+
+    openPanel(`
+        <div class="min-h-screen bg-gray-50 flex flex-col">
+            <div class="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 z-10">
+                <button onclick="closePanel()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2 class="font-bold text-lg">Shopping Cart (${Store.cart.length})</h2>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                ${Store.cart.map((item, idx) => `
+                    <div class="bg-white rounded-xl border border-gray-100 p-3.5 flex gap-3 shadow-sm">
+                        <img src="${item.image}" class="w-20 h-20 rounded-lg object-cover bg-gray-100 flex-shrink-0">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-xs font-bold text-gray-900 line-clamp-2 mb-1">${item.name}</h3>
+                            <p class="text-[10px] text-gray-400 mb-1">${item.supplier} · ${item.variant}</p>
+                            <p class="text-sm font-bold text-brand-700 mb-2">${fmt(item.price)} <span class="text-[10px] text-gray-400 font-normal">/ ${item.unit}</span></p>
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center gap-2">
+                                    <button onclick="updateCartQty(${idx}, -1)" class="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600 text-xs font-bold">−</button>
+                                    <span class="text-xs font-bold w-8 text-center">${item.qty}</span>
+                                    <button onclick="updateCartQty(${idx}, 1)" class="w-7 h-7 bg-gray-100 rounded-lg flex items-center justify-center text-gray-600 text-xs font-bold">+</button>
+                                </div>
+                                <button onclick="removeFromCart(${idx})" class="text-red-400 text-xs font-medium px-2 py-1">Remove</button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="bg-white border-t border-gray-100 p-4 space-y-2">
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Subtotal</span>
+                    <span class="font-semibold">${fmt(subtotal)}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Escrow Fee (2.5%)</span>
+                    <span class="font-semibold">${fmt(escrowFee)}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">Delivery</span>
+                    <span class="font-semibold">${fmt(deliveryFee)}</span>
+                </div>
+                <div class="border-t border-gray-100 pt-2 flex justify-between">
+                    <span class="font-bold text-gray-900">Total</span>
+                    <span class="font-bold text-xl text-brand-700">${fmt(grandTotal)}</span>
+                </div>
+                <button onclick="proceedToCheckout()" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-brand-200 mt-2 flex items-center justify-center gap-2">
+                    <i class="fas fa-lock"></i> Proceed to Escrow Checkout
+                </button>
+                <button onclick="closePanel();switchTab('marketplace')" class="w-full py-3 text-xs text-gray-500 font-medium">Continue Shopping</button>
+            </div>
+        </div>
+    `);
+}
+
+function updateCartQty(idx, delta) {
+    const item = Store.cart[idx];
+    item.qty += delta;
+    if (item.qty < item.moq) item.qty = item.moq;
+    showCart();
+    updateBadges();
+}
+
+function removeFromCart(idx) {
+    Store.cart.splice(idx, 1);
+    showCart();
+    updateBadges();
+}
+
+// ======================== CHECKOUT / ESCROW ========================
+function proceedToCheckout() {
+    const subtotal = Store.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const escrowFee = Math.round(subtotal * 0.025);
+    const deliveryFee = Store.cart.length * 25000;
+    const grandTotal = subtotal + escrowFee + deliveryFee;
+
+    if (Store.user.balance < grandTotal) {
+        closePanel();
+        setTimeout(() => {
+            openModal(`
+                <div class="p-5 text-center">
+                    <div class="w-16 h-16 bg-red-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                        <i class="fas fa-exclamation-circle text-red-500 text-2xl"></i>
+                    </div>
+                    <h3 class="font-bold text-lg mb-1">Insufficient Balance</h3>
+                    <p class="text-xs text-gray-500 mb-4">You need ${fmt(grandTotal)} but only have ${fmt(Store.user.balance)} available.</p>
+                    <div class="bg-gray-50 rounded-xl p-4 mb-4 text-left">
+                        <div class="flex justify-between text-sm mb-1"><span class="text-gray-500">Order Total</span><span class="font-bold">${fmt(grandTotal)}</span></div>
+                        <div class="flex justify-between text-sm mb-1"><span class="text-gray-500">Available</span><span class="font-bold text-green-600">${fmt(Store.user.balance)}</span></div>
+                        <div class="flex justify-between text-sm"><span class="text-gray-500">Shortfall</span><span class="font-bold text-red-600">${fmt(grandTotal - Store.user.balance)}</span></div>
+                    </div>
+                    <button onclick="closeModal();switchTab('wallet')" class="w-full btn-primary text-white font-bold py-3.5 rounded-xl mb-2">Deposit Funds</button>
+                    <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium">Cancel</button>
+                </div>
+            `);
+        }, 300);
+        return;
+    }
+
+    openPanel(`
+        <div class="min-h-screen bg-gray-50 flex flex-col">
+            <div class="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 z-10">
+                <button onclick="showCart()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <h2 class="font-bold text-lg">Escrow Checkout</h2>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Progress Steps -->
+                <div class="flex items-center justify-between px-1">
+                    ${['Cart','Review','Payment','Confirm'].map((s, i) => `
+                        <div class="flex flex-col items-center">
+                            <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold mb-1 ${i<2?'step-done':i===2?'step-active':'step-pending'}">
+                                ${i<2?'<i class="fas fa-check"></i>':i+1}
+                            </div>
+                            <span class="text-[9px] font-medium ${i===2?'text-brand-700':'text-gray-400'}">${s}</span>
+                        </div>
+                        ${i<3?'<div class="flex-1 h-0.5 mx-1 bg-gray-200"></div>':''}
+                    `).join('')}
+                </div>
+
+                <!-- Order Summary -->
+                <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                    <h3 class="font-bold text-sm mb-3">Order Summary</h3>
+                    ${Store.cart.map(item => `
+                        <div class="flex items-center gap-3 mb-3 pb-3 border-b border-gray-50 last:border-0 last:mb-0 last:pb-0">
+                            <img src="${item.image}" class="w-14 h-14 rounded-lg object-cover bg-gray-100">
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-bold text-gray-900 line-clamp-1">${item.name}</p>
+                                <p class="text-[10px] text-gray-400">${item.variant} · ${item.qty} ${item.unit}</p>
+                                <p class="text-xs font-bold text-brand-700">${fmt(item.price * item.qty)}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+
+                <!-- Delivery Address -->
+                <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                    <div class="flex items-center justify-between mb-3">
+                        <h3 class="font-bold text-sm">Delivery Address</h3>
+                        <button class="text-xs text-brand-600 font-medium">Change</button>
+                    </div>
+                    <div class="flex items-start gap-3">
+                        <div class="w-9 h-9 rounded-full bg-brand-100 flex items-center justify-center text-brand-600 flex-shrink-0">
+                            <i class="fas fa-map-marker-alt text-sm"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-semibold text-gray-900">${Store.user.businessName}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">${Store.user.location}</p>
+                            <p class="text-xs text-gray-500">${Store.user.phone}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Escrow Protection -->
+                <div class="bg-gradient-to-br from-gold-500/10 to-gold-500/5 rounded-xl border border-gold-500/20 p-4">
+                    <div class="flex items-center gap-3 mb-2">
+                        <div class="w-10 h-10 rounded-full bg-gold-500/20 flex items-center justify-center text-gold-600 flex-shrink-0">
+                            <i class="fas fa-shield-alt text-lg"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-sm text-gold-800">AFRIQ Escrow Protection</h3>
+                            <p class="text-[10px] text-gold-700">Your payment is 100% protected</p>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <div class="flex items-start gap-2 text-xs text-gold-800">
+                            <i class="fas fa-check-circle text-gold-600 mt-0.5"></i>
+                            <span>Funds held securely until you confirm delivery</span>
+                        </div>
+                        <div class="flex items-start gap-2 text-xs text-gold-800">
+                            <i class="fas fa-check-circle text-gold-600 mt-0.5"></i>
+                            <span>Full refund if goods not as described</span>
+                        </div>
+                        <div class="flex items-start gap-2 text-xs text-gold-800">
+                            <i class="fas fa-check-circle text-gold-600 mt-0.5"></i>
+                            <span>AI dispute resolution within 48 hours</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment Breakdown -->
+                <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                    <h3 class="font-bold text-sm mb-3">Payment Breakdown</h3>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span class="font-semibold">${fmt(subtotal)}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Escrow Fee (2.5%)</span><span class="font-semibold">${fmt(escrowFee)}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Delivery Fee</span><span class="font-semibold">${fmt(deliveryFee)}</span></div>
+                        <div class="border-t border-gray-100 pt-2 flex justify-between">
+                            <span class="font-bold text-gray-900">Total</span>
+                            <span class="font-bold text-xl text-brand-700">${fmt(grandTotal)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Wallet Balance -->
+                <div class="bg-brand-50 rounded-xl border border-brand-100 p-4">
+                    <div class="flex items-center justify-between">
+                        <div class="flex items-center gap-2">
+                            <i class="fas fa-wallet text-brand-600"></i>
+                            <span class="text-sm font-semibold text-brand-800">Wallet Balance</span>
+                        </div>
+                        <span class="text-lg font-bold text-brand-700">${fmt(Store.user.balance)}</span>
+                    </div>
+                    <p class="text-[10px] text-brand-600 mt-1">${fmt(Store.user.escrowLocked)} currently in active escrows</p>
+                </div>
+            </div>
+
+            <div class="bg-white border-t border-gray-100 p-4">
+                <button onclick="confirmEscrowPayment()" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-brand-200 flex items-center justify-center gap-2">
+                    <i class="fas fa-lock"></i> Pay ${fmt(grandTotal)} into Escrow
+                </button>
+                <p class="text-center text-[10px] text-gray-400 mt-2">By confirming, you agree to AFRIQ Escrow Terms</p>
+            </div>
+        </div>
+    `);
+}
+
+function confirmEscrowPayment() {
+    const subtotal = Store.cart.reduce((s, i) => s + (i.price * i.qty), 0);
+    const escrowFee = Math.round(subtotal * 0.025);
+    const deliveryFee = Store.cart.length * 25000;
+    const grandTotal = subtotal + escrowFee + deliveryFee;
+
+    Store.user.balance -= grandTotal;
+    Store.user.escrowLocked += subtotal;
+
+    const orderId = 'ORD-' + new Date().toISOString().slice(2,10).replace(/-/g,'') + '-' + String(Store.orders.length + 1).padStart(3,'0');
+
+    Store.cart.forEach(item => {
+        const order = {
+            id: orderId, productId: item.productId, productName: item.name,
+            supplier: item.supplier, supplierId: item.supplierId,
+            quantity: item.qty, unitPrice: item.price, totalAmount: item.price * item.qty,
+            escrowFee: Math.round(item.price * item.qty * 0.025), grandTotal: item.price * item.qty + Math.round(item.price * item.qty * 0.025) + 25000,
+            deliveryFee: 25000, variant: item.variant,
+            status: "pending_payment", progress: 15, createdAt: "Just now",
+            deliveryDate: "Pending", trackingId: "AFQ-TRK-" + Math.random().toString(36).substr(2,6).toUpperCase(),
+            steps: [
+                {name: "Order Placed", done: true, current: true},
+                {name: "Payment Confirmed", done: false},
+                {name: "Shipped", done: false},
+                {name: "In Transit", done: false},
+                {name: "Delivered", done: false},
+                {name: "Completed", done: false}
+            ]
+        };
+        Store.orders.unshift(order);
+
+        // Add transaction
+        Store.transactions.unshift({
+            id: 'TXN-' + Date.now(), type: 'escrow_lock', amount: order.grandTotal,
+            desc: `Escrow ${orderId} — ${item.name}`,
+            date: 'Just now', status: 'pending', balance: Store.user.balance
+        });
+
+        // Notify supplier
+        let conv = Store.conversations.find(c => c.supplierId === item.supplierId);
+        if (conv) {
+            conv.messages.push({
+                sender: "me", type: "order",
+                text: `New order ${orderId} for ${item.qty} ${item.unit} of ${item.name}. Payment secured in escrow.`,
+                time: "Just now"
+            });
+            conv.lastMessage = `New order ${orderId} — ${item.name}`;
+        }
+    });
+
+    Store.cart = [];
+    updateBadges();
+    closePanel();
+    showToast('Escrow payment successful! Order placed.', 'fa-shield-alt');
+    setTimeout(() => switchTab('orders'), 800);
+}
+
+// ======================== ORDERS ========================
+function renderOrders() {
+    const active = Store.orders.filter(o => o.status !== 'completed');
+    const completed = Store.orders.filter(o => o.status === 'completed');
+
+    let html = `
+        <div class="fade-in">
+            <div class="px-4 py-3 border-b border-gray-100 bg-white sticky top-[60px] z-30">
+                <h2 class="font-bold text-lg">My Orders</h2>
+                <p class="text-xs text-gray-400">${Store.orders.length} total orders · ${active.length} active</p>
+            </div>
+
+            ${active.length > 0 ? `
+                <div class="px-4 py-3">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Active Orders</p>
+                    <div class="space-y-3">
+                        ${active.map(o => renderOrderCard(o)).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            ${completed.length > 0 ? `
+                <div class="px-4 py-3">
+                    <p class="text-xs font-bold text-gray-500 uppercase tracking-wider mb-2">Completed</p>
+                    <div class="space-y-3">
+                        ${completed.map(o => renderOrderCard(o)).join('')}
+                    </div>
+                </div>
+            ` : ''}
+
+            ${Store.orders.length === 0 ? `
+                <div class="text-center py-16 px-4">
+                    <div class="w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-clipboard-list text-gray-300 text-2xl"></i>
+                    </div>
+                    <p class="text-sm font-bold text-gray-600 mb-1">No orders yet</p>
+                    <p class="text-xs text-gray-400 mb-6">Your escrow orders will appear here</p>
+                    <button onclick="switchTab('marketplace')" class="btn-primary text-white font-bold px-8 py-3 rounded-xl">Start Shopping</button>
+                </div>
+            ` : ''}
+        </div>
+    `;
+    document.getElementById('main-content').innerHTML = html;
+}
+
+function renderOrderCard(o) {
+    const statusColors = {
+        pending_payment: 'bg-yellow-50 text-yellow-700 border-yellow-200',
+        shipped: 'bg-blue-50 text-blue-700 border-blue-200',
+        in_transit: 'bg-navy-50 text-navy-700 border-navy-200',
+        delivered: 'bg-brand-50 text-brand-700 border-brand-200',
+        completed: 'bg-gray-50 text-gray-600 border-gray-200',
+        disputed: 'bg-red-50 text-red-700 border-red-200'
+    };
+    const statusLabels = {
+        pending_payment: 'Awaiting Payment', shipped: 'Shipped', in_transit: 'In Transit',
+        delivered: 'Delivered', completed: 'Completed', disputed: 'Disputed'
+    };
+    const statusIcons = {
+        pending_payment: 'fa-clock', shipped: 'fa-truck', in_transit: 'fa-shipping-fast',
+        delivered: 'fa-box-open', completed: 'fa-check-circle', disputed: 'fa-exclamation-triangle'
+    };
+
+    return `
+        <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm card-press" onclick="showOrderDetail('${o.id}')">
+            <div class="flex items-center justify-between mb-3">
+                <div class="flex items-center gap-2">
+                    <span class="text-xs font-bold text-gray-700">${o.id}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold border ${statusColors[o.status] || 'bg-gray-50 text-gray-600 border-gray-200'}">
+                        <i class="fas ${statusIcons[o.status] || 'fa-circle'} mr-1"></i>${statusLabels[o.status] || o.status}
+                    </span>
+                </div>
+                <span class="text-[10px] text-gray-400">${o.createdAt}</span>
+            </div>
+            <p class="text-sm font-bold text-gray-900 mb-1 line-clamp-1">${o.productName}</p>
+            <p class="text-xs text-gray-500 mb-3">${o.supplier} · ${o.variant} · ${o.quantity} units</p>
+
+            <div class="w-full bg-gray-100 rounded-full h-1.5 mb-3">
+                <div class="bg-brand-500 h-1.5 rounded-full progress-fill" style="width: ${o.progress}%"></div>
+            </div>
+
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-xs text-gray-400">Total</p>
+                    <p class="text-sm font-bold text-brand-700">${fmt(o.grandTotal)}</p>
+                </div>
+                ${o.status === 'delivered' ? `
+                    <button onclick="event.stopPropagation();confirmDelivery('${o.id}')" class="px-4 py-2 bg-brand-600 text-white text-xs font-bold rounded-lg">
+                        Confirm Delivery
+                    </button>
+                ` : o.status === 'shipped' || o.status === 'in_transit' ? `
+                    <span class="text-xs text-gray-400 flex items-center gap-1">
+                        <i class="fas fa-truck"></i> ${o.trackingId}
+                    </span>
+                ` : ''}
+            </div>
+        </div>
+    `;
+}
+
+function showOrderDetail(orderId) {
+    const o = Store.orders.find(x => x.id === orderId);
+    if (!o) return;
+
+    const statusLabels = { pending_payment: 'Awaiting Payment', shipped: 'Shipped', in_transit: 'In Transit', delivered: 'Delivered', completed: 'Completed', disputed: 'Disputed' };
+
+    openPanel(`
+        <div class="min-h-screen bg-gray-50 flex flex-col">
+            <div class="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 z-10">
+                <button onclick="closePanel()" class="w-9 h-9 rounded-full bg-gray-100 flex items-center justify-center text-gray-600">
+                    <i class="fas fa-arrow-left"></i>
+                </button>
+                <div>
+                    <h2 class="font-bold text-base">Order ${o.id}</h2>
+                    <p class="text-[10px] text-gray-400">${statusLabels[o.status]}</p>
+                </div>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-4">
+                <!-- Progress -->
+                <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                    <div class="flex items-center justify-between mb-4">
+                        ${o.steps.map((s, i) => `
+                            <div class="flex flex-col items-center relative">
+                                <div class="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold z-10 ${s.done?'step-done':s.current?'step-active':'step-pending'}">
+                                    ${s.done?'<i class="fas fa-check"></i>':i+1}
+                                </div>
+                                <span class="text-[8px] font-medium mt-1 ${s.current?'text-brand-700':'text-gray-400'} text-center w-12 leading-tight">${s.name}</span>
+                                ${i < o.steps.length - 1 ? `<div class="absolute top-4 left-1/2 w-full h-0.5 ${s.done?'bg-brand-500':'bg-gray-200'}" style="transform: translateX(50%)"></div>` : ''}
+                            </div>
+                        `).join('')}
+                    </div>
+                    <div class="w-full bg-gray-100 rounded-full h-2">
+                        <div class="bg-brand-500 h-2 rounded-full progress-fill" style="width: ${o.progress}%"></div>
+                    </div>
+                </div>
+
+                <!-- Product -->
+                <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                    <p class="text-xs font-bold text-gray-500 uppercase mb-3">Product Details</p>
+                    <div class="flex items-center gap-3">
+                        <div class="w-16 h-16 rounded-xl bg-gray-100 flex items-center justify-center text-gray-400">
+                            <i class="fas fa-box text-xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-sm font-bold text-gray-900">${o.productName}</p>
+                            <p class="text-xs text-gray-500 mt-0.5">${o.variant} · ${o.quantity} units</p>
+                            <p class="text-xs text-brand-700 font-bold mt-1">${fmt(o.unitPrice)} / unit</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Payment -->
+                <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                    <p class="text-xs font-bold text-gray-500 uppercase mb-3">Payment</p>
+                    <div class="space-y-2 text-sm">
+                        <div class="flex justify-between"><span class="text-gray-500">Subtotal</span><span class="font-semibold">${fmt(o.totalAmount)}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Escrow Fee</span><span class="font-semibold">${fmt(o.escrowFee)}</span></div>
+                        <div class="flex justify-between"><span class="text-gray-500">Delivery</span><span class="font-semibold">${fmt(o.deliveryFee)}</span></div>
+                        <div class="border-t border-gray-100 pt-2 flex justify-between">
+                            <span class="font-bold">Total</span>
+                            <span class="font-bold text-brand-700">${fmt(o.grandTotal)}</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tracking -->
+                ${o.trackingId ? `
+                    <div class="bg-white rounded-xl border border-gray-100 p-4 shadow-sm">
+                        <p class="text-xs font-bold text-gray-500 uppercase mb-3">Tracking</p>
+                        <div class="flex items-center gap-3 p-3 bg-brand-50 rounded-xl">
+                            <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-600">
+                                <i class="fas fa-truck"></i>
+                            </div>
+                            <div class="flex-1">
+                                <p class="text-sm font-bold text-gray-900">${o.trackingId}</p>
+                                <p class="text-xs text-gray-500">AFRIQ Logistics</p>
+                            </div>
+                            <button class="text-xs text-brand-600 font-bold px-3 py-1.5 bg-brand-100 rounded-lg">Track</button>
+                        </div>
+                    </div>
+                ` : ''}
+
+                <!-- Actions -->
+                <div class="space-y-2">
+                    ${o.status === 'delivered' ? `
+                        <button onclick="confirmDelivery('${o.id}')" class="w-full btn-primary text-white font-bold py-3.5 rounded-xl shadow-lg">
+                            <i class="fas fa-check-circle mr-2"></i>Confirm Delivery & Release Funds
+                        </button>
+                        <button onclick="openDispute('${o.id}')" class="w-full py-3 text-sm text-red-500 font-medium border border-red-100 rounded-xl bg-red-50">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>Open Dispute
+                        </button>
+                    ` : o.status === 'completed' ? `
+                        <button onclick="startChat('${o.supplierId}')" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl">
+                            <i class="fas fa-comment mr-2"></i>Message Supplier
+                        </button>
+                        <button class="w-full py-3 text-sm text-gray-500 font-medium border border-gray-200 rounded-xl bg-white">
+                            <i class="fas fa-star mr-2"></i>Leave Review
+                        </button>
+                    ` : `
+                        <button onclick="startChat('${o.supplierId}')" class="w-full bg-gray-900 text-white font-bold py-3.5 rounded-xl">
+                            <i class="fas fa-comment mr-2"></i>Message Supplier
+                        </button>
+                    `}
+                </div>
+            </div>
+        </div>
+    `);
+}
+
+function confirmDelivery(orderId) {
+    const o = Store.orders.find(x => x.id === orderId);
+    if (!o) return;
+
+    openModal(`
+        <div class="p-5">
+            <div class="w-14 h-14 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                <i class="fas fa-box-open text-brand-600 text-2xl"></i>
+            </div>
+            <h3 class="font-bold text-lg text-center mb-1">Confirm Delivery?</h3>
+            <p class="text-xs text-gray-500 text-center mb-5">Only confirm if you have received and inspected the goods.</p>
+
+            <div class="bg-gray-50 rounded-xl p-4 mb-5">
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-500">Order</span>
+                    <span class="font-bold">${o.id}</span>
+                </div>
+                <div class="flex justify-between text-sm mb-2">
+                    <span class="text-gray-500">Amount to Release</span>
+                    <span class="font-bold text-brand-700">${fmt(o.totalAmount)}</span>
+                </div>
+                <div class="flex justify-between text-sm">
+                    <span class="text-gray-500">To Supplier</span>
+                    <span class="font-bold">${o.supplier}</span>
+                </div>
+            </div>
+
+            <button onclick="doConfirmDelivery('${orderId}')" class="w-full btn-primary text-white font-bold py-3.5 rounded-xl mb-2">
+                <i class="fas fa-check mr-2"></i>Yes, Release Funds
+            </button>
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium">Cancel</button>
+        </div>
+    `);
+}
+
+function doConfirmDelivery(orderId) {
+    const o = Store.orders.find(x => x.id === orderId);
+    if (!o) return;
+
+    o.status = 'completed';
+    o.progress = 100;
+    o.steps.forEach(s => { s.done = true; s.current = false; });
+
+    Store.user.escrowLocked -= o.totalAmount;
+    Store.transactions.unshift({
+        id: 'TXN-' + Date.now(), type: 'release', amount: o.totalAmount,
+        desc: `Released to ${o.supplier} — ${o.id}`,
+        date: 'Just now', status: 'completed', balance: Store.user.balance
+    });
+
+    closeModal();
+    closePanel();
+    showToast('Delivery confirmed! Funds released to supplier.', 'fa-check-circle');
+    updateBadges();
+    setTimeout(() => switchTab('orders'), 500);
+}
+
+function openDispute(orderId) {
+    openModal(`
+        <div class="p-5">
+            <h3 class="font-bold text-lg mb-1">Open Dispute</h3>
+            <p class="text-xs text-gray-500 mb-4">Our AI mediator will review your case within 24 hours.</p>
+
+            <div class="space-y-3 mb-5">
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Issue Type</label>
+                    <select class="w-full bg-gray-100 rounded-xl px-3 py-3 text-sm border border-gray-200">
+                        <option>Wrong product received</option>
+                        <option>Damaged goods</option>
+                        <option>Incomplete quantity</option>
+                        <option>Quality not as described</option>
+                        <option>Delivery not received</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Description</label>
+                    <textarea placeholder="Describe the issue in detail..." rows="4" class="w-full bg-gray-100 rounded-xl px-3 py-3 text-sm border border-gray-200 resize-none"></textarea>
+                </div>
+                <div>
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Evidence (Photos)</label>
+                    <div class="w-full h-24 bg-gray-100 rounded-xl border-2 border-dashed border-gray-300 flex flex-col items-center justify-center text-gray-400">
+                        <i class="fas fa-camera text-xl mb-1"></i>
+                        <span class="text-xs">Tap to upload photos</span>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="closeModal();showToast('Dispute submitted. AI review in 24h.', 'fa-gavel')" class="w-full bg-red-500 text-white font-bold py-3.5 rounded-xl mb-2">
+                <i class="fas fa-gavel mr-2"></i>Submit Dispute
+            </button>
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium">Cancel</button>
+        </div>
+    `);
+}
+
+// ======================== MESSAGES ========================
+function renderMessages() {
+    let html = `
+        <div class="fade-in">
+            <div class="px-4 py-3 border-b border-gray-100 bg-white sticky top-[60px] z-30 flex items-center justify-between">
+                <div>
+                    <h2 class="font-bold text-lg">Messages</h2>
+                    <p class="text-xs text-gray-400">${Store.conversations.length} conversations</p>
+                </div>
+                <button onclick="newConversation()" class="w-9 h-9 bg-brand-100 rounded-full flex items-center justify-center text-brand-600">
+                    <i class="fas fa-plus text-sm"></i>
+                </button>
+            </div>
+            <div class="divide-y divide-gray-50">
+                ${Store.conversations.map(c => `
+                    <div class="flex items-center gap-3 p-4 active:bg-gray-50 transition-colors" onclick="openChat(${c.id})">
+                        <div class="relative">
+                            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-sm shadow-sm">
+                                ${c.avatar}
+                            </div>
+                            ${c.online ? `<span class="absolute bottom-0 right-0 w-3.5 h-3.5 bg-green-500 border-2 border-white rounded-full"></span>` : ''}
+                        </div>
+                        <div class="flex-1 min-w-0">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <h3 class="font-semibold text-sm text-gray-900">${c.with}</h3>
+                                <span class="text-[10px] text-gray-400">${c.time}</span>
+                            </div>
+                            <p class="text-xs text-gray-500 truncate">${c.lastMessage}</p>
+                        </div>
+                        ${c.unread > 0 ? `<span class="bg-brand-600 text-white text-[10px] font-bold px-2 py-0.5 rounded-full min-w-[20px] text-center">${c.unread}</span>` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        </div>
+    `;
+    document.getElementById('main-content').innerHTML = html;
+}
+
+function openChat(convId) {
+    const c = Store.conversations.find(x => x.id === convId);
+    c.unread = 0;
+    updateBadges();
+
+    openPanel(`
+        <div class="min-h-screen bg-gray-50 flex flex-col">
+            <div class="sticky top-0 bg-white border-b border-gray-100 px-4 py-3 flex items-center gap-3 z-10">
+                <button onclick="closePanel();setTimeout(renderMessages,200)" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </button>
+                <div class="relative">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-xs">${c.avatar}</div>
+                    ${c.online ? `<span class="absolute bottom-0 right-0 w-2.5 h-2.5 bg-green-500 border-2 border-white rounded-full"></span>` : ''}
+                </div>
+                <div class="flex-1">
+                    <h3 class="font-bold text-sm">${c.with}</h3>
+                    <p class="text-[10px] text-gray-400">${c.online ? 'Online now' : 'Last seen 2h ago'}</p>
+                </div>
+                <button onclick="showChatMenu(${c.id})" class="text-gray-400 p-1"><i class="fas fa-ellipsis-v"></i></button>
+            </div>
+
+            <div class="flex-1 overflow-y-auto p-4 space-y-3">
+                ${c.messages.map(m => `
+                    <div class="flex ${m.sender === 'me' ? 'justify-end' : 'justify-start'}">
+                        <div class="max-w-[82%] ${m.sender === 'me' ? 'chat-buyer' : 'chat-seller'} px-3.5 py-2.5 rounded-2xl text-sm shadow-sm">
+                            ${m.type === 'order' ? `<div class="flex items-center gap-2 mb-1.5 pb-1.5 border-b border-black/5"><i class="fas fa-shopping-bag text-brand-600"></i><span class="text-[10px] font-bold text-brand-700">ORDER UPDATE</span></div>` : ''}
+                            <p class="text-gray-800 leading-relaxed">${m.text}</p>
+                            <p class="text-[10px] text-gray-400 mt-1 text-right">${m.time}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+
+            <div class="p-3 border-t border-gray-100 bg-white flex items-center gap-2">
+                <button class="text-gray-400 p-2 hover:bg-gray-100 rounded-lg transition-all"><i class="fas fa-paperclip"></i></button>
+                <button class="text-gray-400 p-2 hover:bg-gray-100 rounded-lg transition-all"><i class="fas fa-camera"></i></button>
+                <input type="text" id="chat-input" placeholder="Type a message..." 
+                    class="flex-1 bg-gray-100 rounded-full px-4 py-2.5 text-sm focus:ring-2 focus:ring-brand-200 transition-all"
+                    onkeypress="if(event.key==='Enter')sendMessage(${c.id})">
+                <button onclick="sendMessage(${c.id})" class="w-10 h-10 btn-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-brand-200 hover:scale-105 transition-all">
+                    <i class="fas fa-paper-plane text-sm"></i>
+                </button>
+            </div>
+        </div>
+    `);
+    setTimeout(() => document.getElementById('chat-input')?.focus(), 100);
+}
+
+function sendMessage(convId) {
+    const input = document.getElementById('chat-input');
+    if (!input || !input.value.trim()) return;
+
+    const c = Store.conversations.find(x => x.id === convId);
+    c.messages.push({ sender: 'me', text: input.value, time: 'Just now', type: 'text' });
+    c.lastMessage = input.value;
+    c.time = 'Just now';
+
+    openChat(convId);
+
+    // Simulate reply
+    setTimeout(() => {
+        c.messages.push({ sender: 'them', text: 'Thanks for your message. We will get back to you shortly.', time: 'Just now', type: 'text' });
+        c.lastMessage = 'Thanks for your message...';
+        if (Store.currentTab !== 'messages') {
+            c.unread = (c.unread || 0) + 1;
+            updateBadges();
+        }
+    }, 2000);
+}
+
+function startChat(supplierId) {
+    closeModal();
+    closePanel();
+    let c = Store.conversations.find(x => x.supplierId === supplierId);
+    if (!c) {
+        const p = Store.products.find(x => x.supplierId === supplierId);
+        c = {
+            id: Store.conversations.length + 1,
+            with: p?.supplier || 'Supplier',
+            avatar: (p?.supplier || 'SU').split(' ').map(x=>x[0]).join('').substring(0,2),
+            online: true, supplierId,
+            lastMessage: 'New conversation started', time: 'Just now', unread: 0,
+            messages: []
+        };
+        Store.conversations.unshift(c);
+    }
+    setTimeout(() => openChat(c.id), 300);
+}
+
+function newConversation() {
+    openModal(`
+        <div class="p-5">
+            <h3 class="font-bold text-lg mb-1">New Message</h3>
+            <p class="text-xs text-gray-500 mb-4">Start a conversation with a supplier</p>
+            <div class="relative mb-4">
+                <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" placeholder="Search suppliers..." class="w-full bg-gray-100 rounded-xl py-3 pl-11 pr-4 text-sm">
+            </div>
+            <div class="space-y-2 max-h-60 overflow-y-auto">
+                ${Store.products.filter((v,i,a)=>a.findIndex(t=>t.supplierId===v.supplierId)===i).map(p => `
+                    <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-all" onclick="startChat('${p.supplierId}');closeModal()">
+                        <div class="w-10 h-10 rounded-full bg-brand-100 flex items-center justify-center text-brand-700 font-bold text-xs">${p.supplier.split(' ').map(x=>x[0]).join('').substring(0,2)}</div>
+                        <div class="flex-1">
+                            <p class="text-sm font-semibold">${p.supplier}</p>
+                            <p class="text-[10px] text-gray-400">${p.location} · ${p.supplierTrust} Trust</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                    </div>
+                `).join('')}
+            </div>
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium mt-3">Cancel</button>
+        </div>
+    `);
+}
+
+function showChatMenu(convId) {
+    openModal(`
+        <div class="p-5 space-y-1">
+            <button onclick="closeModal()" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left">
+                <i class="fas fa-user text-gray-400 w-5"></i>
+                <span class="text-sm font-medium">View Supplier Profile</span>
+            </button>
+            <button onclick="closeModal()" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left">
+                <i class="fas fa-shopping-bag text-gray-400 w-5"></i>
+                <span class="text-sm font-medium">View Products</span>
+            </button>
+            <button onclick="closeModal()" class="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 text-left">
+                <i class="fas fa-ban text-red-400 w-5"></i>
+                <span class="text-sm font-medium text-red-500">Block Supplier</span>
+            </button>
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium mt-2">Cancel</button>
+        </div>
+    `);
+}
+
+// ======================== WALLET ========================
+function renderWallet() {
+    const totalBalance = Store.user.balance + Store.user.escrowLocked;
+    const totalIn = Store.transactions.filter(t => t.type === 'deposit').reduce((s,t) => s+t.amount, 0);
+    const totalOut = Store.transactions.filter(t => t.type === 'withdrawal' || t.type === 'escrow_lock').reduce((s,t) => s+t.amount, 0);
+
+    let html = `
+        <div class="fade-in">
+            <!-- Balance Card -->
+            <div class="mx-4 mt-4 p-5 btn-primary rounded-2xl text-white shadow-xl shadow-brand-200 relative overflow-hidden">
+                <div class="absolute top-0 right-0 w-40 h-40 bg-white/10 rounded-full -mr-16 -mt-16"></div>
+                <div class="absolute bottom-0 left-0 w-28 h-28 bg-white/10 rounded-full -ml-14 -mb-14"></div>
+                <div class="relative">
+                    <p class="text-brand-200 text-[10px] font-bold tracking-wider uppercase mb-1">Total Balance</p>
+                    <h2 class="text-3xl font-bold mb-4 tracking-tight">${fmt(totalBalance)}</h2>
+                    <div class="flex gap-6">
+                        <div>
+                            <p class="text-[10px] text-brand-200 font-medium">Available</p>
+                            <p class="font-bold text-base">${fmt(Store.user.balance)}</p>
+                        </div>
+                        <div>
+                            <p class="text-[10px] text-brand-200 font-medium">In Escrow</p>
+                            <p class="font-bold text-base">${fmt(Store.user.escrowLocked)}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="flex justify-around px-4 py-5">
+                <button onclick="showDeposit()" class="flex flex-col items-center gap-1.5 group">
+                    <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center text-brand-600 text-xl group-hover:bg-brand-100 transition-all">
+                        <i class="fas fa-arrow-down"></i>
+                    </div>
+                    <span class="text-[11px] font-semibold text-gray-700">Deposit</span>
+                </button>
+                <button onclick="showWithdraw()" class="flex flex-col items-center gap-1.5 group">
+                    <div class="w-14 h-14 bg-gray-50 rounded-2xl flex items-center justify-center text-gray-600 text-xl group-hover:bg-gray-100 transition-all">
+                        <i class="fas fa-arrow-up"></i>
+                    </div>
+                    <span class="text-[11px] font-semibold text-gray-700">Withdraw</span>
+                </button>
+                <button onclick="showTransfer()" class="flex flex-col items-center gap-1.5 group">
+                    <div class="w-14 h-14 bg-navy-50 rounded-2xl flex items-center justify-center text-navy-600 text-xl group-hover:bg-navy-100 transition-all">
+                        <i class="fas fa-paper-plane"></i>
+                    </div>
+                    <span class="text-[11px] font-semibold text-gray-700">Send</span>
+                </button>
+                <button onclick="showEscrows()" class="flex flex-col items-center gap-1.5 group">
+                    <div class="w-14 h-14 bg-gold-500/10 rounded-2xl flex items-center justify-center text-gold-600 text-xl group-hover:bg-gold-500/20 transition-all">
+                        <i class="fas fa-shield-alt"></i>
+                    </div>
+                    <span class="text-[11px] font-semibold text-gray-700">Escrows</span>
+                </button>
+            </div>
+
+            <!-- Stats -->
+            <div class="mx-4 grid grid-cols-3 gap-3 mb-4">
+                <div class="bg-white rounded-xl border border-gray-100 p-3 text-center shadow-sm">
+                    <p class="text-lg font-bold text-green-600">${fmtShort(totalIn)}</p>
+                    <p class="text-[9px] text-gray-400 font-medium">Total In</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-100 p-3 text-center shadow-sm">
+                    <p class="text-lg font-bold text-red-500">${fmtShort(totalOut)}</p>
+                    <p class="text-[9px] text-gray-400 font-medium">Total Out</p>
+                </div>
+                <div class="bg-white rounded-xl border border-gray-100 p-3 text-center shadow-sm">
+                    <p class="text-lg font-bold text-brand-700">${Store.orders.filter(o=>o.status==='completed').length}</p>
+                    <p class="text-[9px] text-gray-400 font-medium">Completed</p>
+                </div>
+            </div>
+
+            <!-- Active Escrows -->
+            <div class="px-4 mb-4">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold text-sm">Active Escrows</h3>
+                    <button onclick="showEscrows()" class="text-xs text-brand-600 font-semibold">View All</button>
+                </div>
+                ${Store.orders.filter(o => o.status !== 'completed').slice(0,3).map(o => `
+                    <div class="bg-white border border-gray-100 rounded-xl p-3.5 mb-2.5 shadow-sm" onclick="showOrderDetail('${o.id}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <p class="text-xs font-bold text-gray-900">${o.id}</p>
+                                <p class="text-[10px] text-gray-400 line-clamp-1">${o.productName}</p>
+                            </div>
+                            <span class="text-xs font-bold text-brand-700">${fmt(o.totalAmount)}</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-1.5 mb-2">
+                            <div class="bg-brand-500 h-1.5 rounded-full progress-fill" style="width: ${o.progress}%"></div>
+                        </div>
+                        <div class="flex items-center justify-between text-[10px]">
+                            <span class="text-gray-500">${o.status === 'pending_payment' ? 'Payment Pending' : o.status === 'shipped' ? 'In Transit' : 'Processing'}</span>
+                            <span class="text-gray-400">${o.supplier}</span>
+                        </div>
+                    </div>
+                `).join('')}
+                ${Store.orders.filter(o => o.status !== 'completed').length === 0 ? `<p class="text-xs text-gray-400 text-center py-4 bg-white rounded-xl border border-gray-100">No active escrows</p>` : ''}
+            </div>
+
+            <!-- Transactions -->
+            <div class="px-4 pb-6">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-bold text-sm">Recent Transactions</h3>
+                    <button class="text-xs text-brand-600 font-semibold">View All</button>
+                </div>
+                <div class="space-y-1">
+                    ${Store.transactions.slice(0, 8).map(t => `
+                        <div class="flex items-center gap-3 py-3 px-3 bg-white rounded-xl border border-gray-50 shadow-sm">
+                            <div class="w-10 h-10 rounded-full ${t.type === 'deposit' ? 'bg-green-50 text-green-600' : t.type === 'withdrawal' ? 'bg-red-50 text-red-600' : t.type === 'escrow_lock' ? 'bg-gold-500/10 text-gold-600' : t.type === 'release' ? 'bg-blue-50 text-blue-600' : 'bg-gray-50 text-gray-600'} flex items-center justify-center text-sm flex-shrink-0">
+                                <i class="fas ${t.type === 'deposit' ? 'fa-arrow-down' : t.type === 'withdrawal' ? 'fa-arrow-up' : t.type === 'escrow_lock' ? 'fa-lock' : t.type === 'release' ? 'fa-unlock' : 'fa-receipt'}"></i>
+                            </div>
+                            <div class="flex-1 min-w-0">
+                                <p class="text-xs font-semibold text-gray-900 truncate">${t.desc}</p>
+                                <p class="text-[10px] text-gray-400">${t.date}</p>
+                            </div>
+                            <div class="text-right">
+                                <span class="text-xs font-bold ${t.type === 'deposit' || t.type === 'release' ? 'text-green-600' : t.type === 'withdrawal' || t.type === 'fee' ? 'text-red-600' : 'text-gold-600'}">
+                                    ${t.type === 'deposit' || t.type === 'release' ? '+' : '-'}${fmt(t.amount)}
+                                </span>
+                                <p class="text-[9px] text-gray-400">${fmt(t.balance)}</p>
+                            </div>
+                        </div>
+                    `).join('')}
+                </div>
+            </div>
+        </div>
+    `;
+    document.getElementById('main-content').innerHTML = html;
+}
+
+function showDeposit() {
+    openModal(`
+        <div class="p-5">
+            <h3 class="font-bold text-lg mb-1">Deposit Funds</h3>
+            <p class="text-xs text-gray-500 mb-5">Add money to your AFRIQ wallet</p>
+
+            <div class="space-y-3 mb-5">
+                <button onclick="simulateDeposit('bank')" class="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]">
+                    <div class="w-11 h-11 bg-blue-50 rounded-xl flex items-center justify-center text-blue-600"><i class="fas fa-university text-lg"></i></div>
+                    <div class="text-left flex-1">
+                        <p class="text-sm font-bold">Bank Transfer</p>
+                        <p class="text-xs text-gray-400">Instant · ₦20 fee</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                </button>
+                <button onclick="simulateDeposit('mobile')" class="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]">
+                    <div class="w-11 h-11 bg-green-50 rounded-xl flex items-center justify-center text-green-600"><i class="fas fa-mobile-alt text-lg"></i></div>
+                    <div class="text-left flex-1">
+                        <p class="text-sm font-bold">Mobile Money</p>
+                        <p class="text-xs text-gray-400">M-Pesa, MTN MoMo · Instant</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                </button>
+                <button onclick="simulateDeposit('agent')" class="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]">
+                    <div class="w-11 h-11 bg-brand-50 rounded-xl flex items-center justify-center text-brand-600"><i class="fas fa-store text-lg"></i></div>
+                    <div class="text-left flex-1">
+                        <p class="text-sm font-bold">Cash Agent</p>
+                        <p class="text-xs text-gray-400">50,000 agents nationwide · ₦50 fee</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                </button>
+                <button onclick="simulateDeposit('crypto')" class="w-full flex items-center gap-3 p-4 border border-gray-200 rounded-xl hover:bg-gray-50 transition-all active:scale-[0.98]">
+                    <div class="w-11 h-11 bg-purple-50 rounded-xl flex items-center justify-center text-purple-600"><i class="fas fa-bitcoin text-lg"></i></div>
+                    <div class="text-left flex-1">
+                        <p class="text-sm font-bold">Crypto (USDT)</p>
+                        <p class="text-xs text-gray-400">Instant · 1% fee</p>
+                    </div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                </button>
+            </div>
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium">Cancel</button>
+        </div>
+    `);
+}
+
+function simulateDeposit(method) {
+    closeModal();
+    setTimeout(() => {
+        openModal(`
+            <div class="p-5">
+                <div class="w-14 h-14 bg-brand-50 rounded-full flex items-center justify-center mx-auto mb-3">
+                    <i class="fas fa-${method === 'bank' ? 'university' : method === 'mobile' ? 'mobile-alt' : method === 'agent' ? 'store' : 'bitcoin'} text-brand-600 text-2xl"></i>
+                </div>
+                <h3 class="font-bold text-lg text-center mb-1">${method === 'bank' ? 'Bank Transfer' : method === 'mobile' ? 'Mobile Money' : method === 'agent' ? 'Cash Agent' : 'Crypto Deposit'}</h3>
+                <p class="text-xs text-gray-500 text-center mb-5">Enter amount to deposit</p>
+
+                <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Amount (₦)</label>
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl font-bold text-gray-900">₦</span>
+                        <input type="number" id="deposit-amount" class="bg-transparent text-3xl font-bold w-full outline-none text-gray-900" placeholder="0.00" value="500000">
+                    </div>
+                </div>
+
+                <div class="flex gap-2 mb-5">
+                    ${[100000, 500000, 1000000, 5000000].map(a => `
+                        <button onclick="document.getElementById('deposit-amount').value=${a}" class="flex-1 py-2 bg-gray-100 rounded-lg text-xs font-bold text-gray-600 hover:bg-gray-200 transition-all">${fmtShort(a)}</button>
+                    `).join('')}
+                </div>
+
+                <button onclick="processDeposit()" class="w-full btn-primary text-white font-bold py-4 rounded-xl shadow-lg shadow-brand-200">
+                    <i class="fas fa-lock mr-2"></i>Confirm Deposit
+                </button>
+                <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium mt-2">Cancel</button>
+            </div>
+        `);
+    }, 200);
+}
+
+function processDeposit() {
+    const amount = parseInt(document.getElementById('deposit-amount')?.value || 0);
+    if (amount < 1000) { showToast('Minimum deposit is ₦1,000', 'fa-exclamation-circle', 'error'); return; }
+
+    Store.user.balance += amount;
+    Store.transactions.unshift({
+        id: 'TXN-' + Date.now(), type: 'deposit', amount,
+        desc: 'Bank Transfer Deposit', date: 'Just now', status: 'completed', balance: Store.user.balance
+    });
+    closeModal();
+    showToast(`₦${amount.toLocaleString()} deposited successfully!`, 'fa-wallet');
+    switchTab('wallet');
+}
+
+function showWithdraw() {
+    openModal(`
+        <div class="p-5">
+            <h3 class="font-bold text-lg mb-1">Withdraw</h3>
+            <p class="text-xs text-gray-500 mb-5">Available: ${fmt(Store.user.balance)}</p>
+            <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                <label class="text-xs font-bold text-gray-700 mb-1.5 block">Amount (₦)</label>
+                <div class="flex items-center gap-2">
+                    <span class="text-2xl font-bold text-gray-900">₦</span>
+                    <input type="number" id="withdraw-amount" class="bg-transparent text-3xl font-bold w-full outline-none text-gray-900" placeholder="0.00">
+                </div>
+                <button onclick="document.getElementById('withdraw-amount').value=${Store.user.balance}" class="text-xs text-brand-600 font-bold mt-2">Withdraw All</button>
+            </div>
+            <div class="mb-5">
+                <label class="text-xs font-bold text-gray-700 mb-1.5 block">To Account</label>
+                <div class="p-3 bg-gray-50 rounded-xl border border-gray-200 flex items-center gap-3">
+                    <div class="w-10 h-10 bg-orange-100 rounded-lg flex items-center justify-center text-orange-600"><i class="fas fa-university"></i></div>
+                    <div>
+                        <p class="text-sm font-semibold">${Store.user.bankName}</p>
+                        <p class="text-xs text-gray-400">${Store.user.accountNumber} · ${Store.user.name}</p>
+                    </div>
+                </div>
+            </div>
+            <button onclick="processWithdraw()" class="w-full btn-primary text-white font-bold py-4 rounded-xl mb-2">Withdraw to Bank</button>
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium">Cancel</button>
+        </div>
+    `);
+}
+
+function processWithdraw() {
+    const amount = parseInt(document.getElementById('withdraw-amount')?.value || 0);
+    if (amount < 1000) { showToast('Minimum withdrawal is ₦1,000', 'fa-exclamation-circle', 'error'); return; }
+    if (amount > Store.user.balance) { showToast('Insufficient balance', 'fa-exclamation-circle', 'error'); return; }
+
+    Store.user.balance -= amount;
+    Store.transactions.unshift({
+        id: 'TXN-' + Date.now(), type: 'withdrawal', amount,
+        desc: 'Bank Transfer Out — ' + Store.user.bankName, date: 'Just now', status: 'completed', balance: Store.user.balance
+    });
+    closeModal();
+    showToast(`₦${amount.toLocaleString()} withdrawn successfully!`, 'fa-arrow-up');
+    switchTab('wallet');
+}
+
+function showTransfer() {
+    openModal(`
+        <div class="p-5">
+            <h3 class="font-bold text-lg mb-1">Send Money</h3>
+            <p class="text-xs text-gray-500 mb-5">Transfer to any AFRIQ user instantly</p>
+            <div class="relative mb-4">
+                <i class="fas fa-search absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm"></i>
+                <input type="text" placeholder="Search by name, phone, or business..." class="w-full bg-gray-100 rounded-xl py-3 pl-11 pr-4 text-sm">
+            </div>
+            <p class="text-xs font-bold text-gray-500 uppercase mb-2">Recent Contacts</p>
+            <div class="space-y-2 mb-5">
+                <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-all" onclick="showTransferAmount('Aba Textile Hub')">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-brand-400 to-brand-600 flex items-center justify-center text-white font-bold text-xs">AT</div>
+                    <div class="flex-1"><p class="text-sm font-semibold">Aba Textile Hub</p><p class="text-[10px] text-gray-400">+234 803 111 2222</p></div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                </div>
+                <div class="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 cursor-pointer transition-all" onclick="showTransferAmount('Alaba Direct Electronics')">
+                    <div class="w-10 h-10 rounded-full bg-gradient-to-br from-blue-400 to-blue-600 flex items-center justify-center text-white font-bold text-xs">AD</div>
+                    <div class="flex-1"><p class="text-sm font-semibold">Alaba Direct Electronics</p><p class="text-[10px] text-gray-400">+234 805 333 4444</p></div>
+                    <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                </div>
+            </div>
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium">Cancel</button>
+        </div>
+    `);
+}
+
+function showTransferAmount(recipient) {
+    closeModal();
+    setTimeout(() => {
+        openModal(`
+            <div class="p-5">
+                <h3 class="font-bold text-lg mb-1">Send to ${recipient}</h3>
+                <p class="text-xs text-gray-500 mb-5">Instant transfer · Free</p>
+                <div class="bg-gray-50 rounded-xl p-4 mb-4">
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Amount (₦)</label>
+                    <div class="flex items-center gap-2">
+                        <span class="text-2xl font-bold text-gray-900">₦</span>
+                        <input type="number" id="transfer-amount" class="bg-transparent text-3xl font-bold w-full outline-none text-gray-900" placeholder="0.00">
+                    </div>
+                </div>
+                <div class="mb-5">
+                    <label class="text-xs font-bold text-gray-700 mb-1.5 block">Note (Optional)</label>
+                    <input type="text" placeholder="What's this for?" class="w-full bg-gray-100 rounded-xl px-3 py-3 text-sm">
+                </div>
+                <button onclick="processTransfer('${recipient}')" class="w-full btn-primary text-white font-bold py-4 rounded-xl mb-2">Send Money</button>
+                <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium">Cancel</button>
+            </div>
+        `);
+    }, 200);
+}
+
+function processTransfer(recipient) {
+    const amount = parseInt(document.getElementById('transfer-amount')?.value || 0);
+    if (amount < 100) { showToast('Minimum transfer is ₦100', 'fa-exclamation-circle', 'error'); return; }
+    if (amount > Store.user.balance) { showToast('Insufficient balance', 'fa-exclamation-circle', 'error'); return; }
+
+    Store.user.balance -= amount;
+    Store.transactions.unshift({
+        id: 'TXN-' + Date.now(), type: 'withdrawal', amount,
+        desc: 'Transfer to ' + recipient, date: 'Just now', status: 'completed', balance: Store.user.balance
+    });
+    closeModal();
+    showToast(`₦${amount.toLocaleString()} sent to ${recipient}`, 'fa-paper-plane');
+    switchTab('wallet');
+}
+
+function showEscrows() {
+    openModal(`
+        <div class="p-5">
+            <h3 class="font-bold text-lg mb-4">All Escrows</h3>
+            <div class="space-y-3">
+                ${Store.orders.filter(o => o.status !== 'completed').map(o => `
+                    <div class="border border-gray-100 rounded-xl p-4 bg-white shadow-sm" onclick="closeModal();showOrderDetail('${o.id}')">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <p class="text-sm font-bold text-gray-900">${o.id}</p>
+                                <p class="text-xs text-gray-500 line-clamp-1">${o.productName}</p>
+                            </div>
+                            <span class="px-2 py-1 rounded-full text-[10px] font-bold ${o.status === 'pending_payment' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' : o.status === 'shipped' ? 'bg-blue-50 text-blue-700 border border-blue-200' : 'bg-brand-50 text-brand-700 border border-brand-200'}">
+                                ${o.status === 'pending_payment' ? 'Pending' : o.status === 'shipped' ? 'Shipped' : 'Processing'}
+                            </span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-2">
+                            <span class="text-gray-500">Amount</span>
+                            <span class="font-bold">${fmt(o.totalAmount)}</span>
+                        </div>
+                        <div class="flex justify-between text-sm mb-3">
+                            <span class="text-gray-500">Fee</span>
+                            <span class="text-gray-700">${fmt(o.escrowFee)}</span>
+                        </div>
+                        <div class="w-full bg-gray-100 rounded-full h-2">
+                            <div class="bg-brand-500 h-2 rounded-full progress-fill" style="width: ${o.progress}%"></div>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            ${Store.orders.filter(o => o.status !== 'completed').length === 0 ? '<p class="text-center text-sm text-gray-400 py-8">No active escrows</p>' : ''}
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium mt-4">Close</button>
+        </div>
+    `);
+}
+
+// ======================== PROFILE ========================
+function renderProfile() {
+    const u = Store.user;
+    let html = `
+        <div class="fade-in">
+            <!-- Profile Header -->
+            <div class="px-4 pt-6 pb-4 text-center">
+                <div class="relative inline-block mb-3">
+                    <div class="w-24 h-24 rounded-full bg-gradient-to-br from-brand-400 via-brand-500 to-brand-700 flex items-center justify-center text-white font-bold text-3xl shadow-xl shadow-brand-200">
+                        ${u.avatar}
+                    </div>
+                    <div class="absolute bottom-1 right-1 w-7 h-7 bg-blue-500 rounded-full border-3 border-white flex items-center justify-center shadow-md">
+                        <i class="fas fa-check text-white text-xs"></i>
+                    </div>
+                </div>
+                <h2 class="font-bold text-xl text-gray-900">${u.name}</h2>
+                <p class="text-sm text-gray-500 mt-0.5">${u.businessName}</p>
+                <div class="flex items-center justify-center gap-2 mt-3">
+                    <span class="px-3 py-1 bg-brand-50 text-brand-700 text-xs font-bold rounded-full border border-brand-100">${u.businessType}</span>
+                    <span class="px-3 py-1 bg-blue-50 text-blue-700 text-xs font-bold rounded-full border border-blue-100 flex items-center gap-1">
+                        <i class="fas fa-badge-check text-[10px]"></i> Verified
+                    </span>
+                </div>
+            </div>
+
+            <!-- Trust Score Card -->
+            <div class="mx-4 p-5 bg-gradient-to-r from-brand-50 via-blue-50 to-brand-50 rounded-2xl border border-brand-100 mb-4 shadow-sm">
+                <div class="flex items-center justify-between mb-4">
+                    <div>
+                        <p class="text-xs font-bold text-gray-600 uppercase tracking-wider">Trust Score</p>
+                        <p class="text-3xl font-bold text-brand-700 mt-1">${u.trustScore}<span class="text-base text-gray-400 font-normal">/100</span></p>
+                    </div>
+                    <div class="w-16 h-16 rounded-full border-4 border-brand-400 flex items-center justify-center trust-pulse bg-white">
+                        <i class="fas fa-shield-alt text-brand-600 text-2xl"></i>
+                    </div>
+                </div>
+                <div class="grid grid-cols-3 gap-2">
+                    <div class="bg-white/70 rounded-xl p-3 text-center backdrop-blur">
+                        <p class="text-xl font-bold text-gray-900">${u.totalDeals}</p>
+                        <p class="text-[9px] text-gray-500 font-medium uppercase">Deals Done</p>
+                    </div>
+                    <div class="bg-white/70 rounded-xl p-3 text-center backdrop-blur">
+                        <p class="text-xl font-bold text-gray-900">${u.successRate}%</p>
+                        <p class="text-[9px] text-gray-500 font-medium uppercase">Success Rate</p>
+                    </div>
+                    <div class="bg-white/70 rounded-xl p-3 text-center backdrop-blur">
+                        <p class="text-xl font-bold text-gray-900">${u.memberSince}</p>
+                        <p class="text-[9px] text-gray-500 font-medium uppercase">Member Since</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Menu -->
+            <div class="px-4 pb-8 space-y-2">
+                ${[
+                    {icon:'fa-history', title:'Transaction History', desc:'View all past transactions', color:'bg-gray-100 text-gray-600'},
+                    {icon:'fa-star', title:'Reviews & Ratings', desc:u.totalDeals+' reviews from partners', color:'bg-yellow-50 text-yellow-600'},
+                    {icon:'fa-map-marker-alt', title:'Business Location', desc:u.location, color:'bg-red-50 text-red-600'},
+                    {icon:'fa-bell', title:'Notifications', desc:'Push, email, SMS preferences', color:'bg-blue-50 text-blue-600'},
+                    {icon:'fa-shield-alt', title:'Security', desc:'PIN, biometric, 2FA settings', color:'bg-green-50 text-green-600'},
+                    {icon:'fa-users', title:'Refer & Earn', desc:'Get ₦1,000 per referral', color:'bg-purple-50 text-purple-600'},
+                    {icon:'fa-question-circle', title:'Help & Support', desc:'Chat support, FAQs, disputes', color:'bg-pink-50 text-pink-600'},
+                    {icon:'fa-file-contract', title:'Legal & Compliance', desc:'Terms, privacy, KYC status', color:'bg-navy-50 text-navy-600'}
+                ].map(item => `
+                    <button class="w-full flex items-center gap-3.5 p-4 bg-white border border-gray-100 rounded-xl hover:bg-gray-50 transition-all active:scale-[0.99] shadow-sm">
+                        <div class="w-10 h-10 rounded-xl ${item.color} flex items-center justify-center flex-shrink-0">
+                            <i class="fas ${item.icon}"></i>
+                        </div>
+                        <div class="flex-1 text-left">
+                            <p class="text-sm font-bold text-gray-900">${item.title}</p>
+                            <p class="text-[11px] text-gray-400 mt-0.5">${item.desc}</p>
+                        </div>
+                        <i class="fas fa-chevron-right text-gray-300 text-xs"></i>
+                    </button>
+                `).join('')}
+            </div>
+
+            <!-- Logout -->
+            <div class="px-4 pb-10">
+                <button class="w-full py-3.5 text-red-500 text-sm font-bold border border-red-100 rounded-xl hover:bg-red-50 transition-all active:scale-[0.99]">
+                    <i class="fas fa-sign-out-alt mr-2"></i>Log Out
+                </button>
+                <p class="text-center text-[10px] text-gray-300 mt-4">AFRIQ v2.0.0 · Built for Africa · © 2024</p>
+            </div>
+        </div>
+    `;
+    document.getElementById('main-content').innerHTML = html;
+}
+
+// ======================== NOTIFICATIONS ========================
+function showNotifications() {
+    const unread = Store.notifications.filter(n => !n.read).length;
+
+    openModal(`
+        <div class="p-5">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="font-bold text-lg">Notifications</h3>
+                ${unread > 0 ? `<button onclick="markAllRead()" class="text-xs text-brand-600 font-bold">Mark all read</button>` : ''}
+            </div>
+            <div class="space-y-2">
+                ${Store.notifications.map(n => `
+                    <div class="flex gap-3 p-3 rounded-xl ${n.read ? 'bg-white border border-gray-100' : 'bg-brand-50 border border-brand-100'} transition-all" onclick="markRead(${n.id})">
+                        <div class="w-10 h-10 rounded-full ${n.color} flex items-center justify-center flex-shrink-0">
+                            <i class="fas ${n.icon}"></i>
+                        </div>
+                        <div class="flex-1">
+                            <div class="flex items-center justify-between mb-0.5">
+                                <p class="text-xs font-bold ${n.read ? 'text-gray-700' : 'text-gray-900'}">${n.title}</p>
+                                ${!n.read ? '<span class="w-2 h-2 bg-brand-500 rounded-full"></span>' : ''}
+                            </div>
+                            <p class="text-xs text-gray-500">${n.desc}</p>
+                            <p class="text-[10px] text-gray-400 mt-1">${n.time}</p>
+                        </div>
+                    </div>
+                `).join('')}
+            </div>
+            <button onclick="closeModal()" class="w-full py-3 text-sm text-gray-500 font-medium mt-4">Close</button>
+        </div>
+    `);
+}
+
+function markRead(id) {
+    const n = Store.notifications.find(x => x.id === id);
+    if (n) n.read = true;
+    showNotifications();
+    updateBadges();
+}
+
+function markAllRead() {
+    Store.notifications.forEach(n => n.read = true);
+    showNotifications();
+    updateBadges();
+}
+
+// ======================== INIT ========================
+document.addEventListener('DOMContentLoaded', () => {
+    switchTab('marketplace');
+    updateBadges();
+});
+</script>
+
+</body>
+</html>
