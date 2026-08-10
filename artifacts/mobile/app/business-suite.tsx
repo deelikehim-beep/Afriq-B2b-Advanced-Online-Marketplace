@@ -1,0 +1,86 @@
+import { Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import React from 'react';
+import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useColors } from '@/hooks/useColors';
+
+const MODULES = [
+  { title: 'Inventory command centre', desc: 'Stock levels, reorder points, transfers and supplier lead times.', icon: 'cube-outline', color: '#059669', badge: 'Demo preview' },
+  { title: 'Invoices & procurement', desc: 'Create purchase orders, reconcile invoices and track supplier spend.', icon: 'document-text-outline', color: '#0284c7', badge: 'Ready to configure' },
+  { title: 'Demand intelligence', desc: 'AI-curated best sellers, slow movers and five-day discovery cycles.', icon: 'analytics-outline', color: '#7c3aed', badge: 'AI demo' },
+  { title: 'Warehouse & fleet', desc: 'Coordinate receiving, dispatch, delivery milestones and proof of delivery.', icon: 'car-outline', color: '#d97706', badge: 'Demo preview' },
+  { title: 'Inventory sync subscriptions', desc: 'Connect multiple stores and keep catalog quantities aligned across channels.', icon: 'sync-outline', color: '#db2777', badge: 'Coming soon' },
+  { title: 'Cross-border trade desk', desc: 'Escrow, currency conversion, customs documents and landed-cost planning.', icon: 'globe-outline', color: '#0d9488', badge: 'Demo workflow' },
+];
+
+export default function BusinessSuite() {
+  const colors = useColors();
+  const router = useRouter();
+  const insets = useSafeAreaInsets();
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" />
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.back}><Ionicons name="arrow-back" size={22} color={colors.foreground} /></TouchableOpacity>
+        <View style={{ flex: 1 }}><Text style={[styles.title, { color: colors.foreground }]}>Merchant Suite</Text><Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Tools to run your trade business</Text></View>
+        <View style={[styles.demoPill, { backgroundColor: colors.goldBg }]}><Ionicons name="flash-outline" size={12} color={colors.goldDark} /><Text style={[styles.demoPillTxt, { color: colors.goldDark }]}>DEMO</Text></View>
+      </View>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 35 }}>
+        <View style={[styles.hero, { backgroundColor: colors.brandDeep }]}>
+          <View style={styles.heroOrb} />
+          <View style={[styles.heroIcon, { backgroundColor: colors.brand }]}><Ionicons name="business-outline" size={25} color="#ffffff" /></View>
+          <Text style={styles.heroTitle}>One operating layer for African trade</Text>
+          <Text style={styles.heroDesc}>Bring orders, stock, suppliers, payments and delivery into one clear workspace. These workflows are simulated in demo mode.</Text>
+          <View style={styles.heroStats}><View><Text style={styles.heroStatValue}>147</Text><Text style={styles.heroStatLabel}>trade deals</Text></View><View><Text style={styles.heroStatValue}>98%</Text><Text style={styles.heroStatLabel}>success rate</Text></View><View><Text style={styles.heroStatValue}>12</Text><Text style={styles.heroStatLabel}>active SKUs</Text></View></View>
+        </View>
+        <View style={styles.sectionHead}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Operations</Text><Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>Tap a module to preview</Text></View>
+        <View style={styles.grid}>
+          {MODULES.map(module => (
+            <TouchableOpacity key={module.title} style={[styles.module, { backgroundColor: colors.card, borderColor: colors.border }]} onPress={() => router.push('/business-suite' as any)} activeOpacity={0.85}>
+              <View style={styles.moduleTop}><View style={[styles.moduleIcon, { backgroundColor: module.color + '18' }]}><Ionicons name={module.icon as any} size={21} color={module.color} /></View><Ionicons name="arrow-forward-circle-outline" size={18} color={colors.mutedForeground} /></View>
+              <Text style={[styles.moduleTitle, { color: colors.foreground }]}>{module.title}</Text>
+              <Text style={[styles.moduleDesc, { color: colors.mutedForeground }]}>{module.desc}</Text>
+              <View style={[styles.moduleBadge, { backgroundColor: module.color + '14' }]}><Text style={[styles.moduleBadgeTxt, { color: module.color }]}>{module.badge}</Text></View>
+            </TouchableOpacity>
+          ))}
+        </View>
+        <View style={[styles.notice, { backgroundColor: colors.navyBg }]}>
+          <Ionicons name="information-circle-outline" size={20} color={colors.navy} />
+          <Text style={[styles.noticeTxt, { color: colors.foreground }]}>AFRIQ does not claim live ERP, customs, fleet, payment or currency connectivity in this demo. Connect your approved providers when you are ready to go live.</Text>
+        </View>
+      </ScrollView>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 16, paddingVertical: 14, borderBottomWidth: 1 },
+  back: { width: 34, justifyContent: 'center' },
+  title: { fontSize: 19, fontFamily: 'Inter_700Bold' },
+  subtitle: { fontSize: 11, marginTop: 2, fontFamily: 'Inter_400Regular' },
+  demoPill: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 8, paddingVertical: 6, borderRadius: 12 },
+  demoPillTxt: { fontSize: 9, fontFamily: 'Inter_700Bold' },
+  hero: { borderRadius: 18, padding: 18, overflow: 'hidden', marginBottom: 20 },
+  heroOrb: { position: 'absolute', width: 170, height: 170, borderRadius: 85, right: -70, top: -65, backgroundColor: 'rgba(255,255,255,0.07)' },
+  heroIcon: { width: 48, height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center', marginBottom: 13 },
+  heroTitle: { color: '#ffffff', fontSize: 21, lineHeight: 27, fontFamily: 'Inter_700Bold', maxWidth: 280 },
+  heroDesc: { color: 'rgba(255,255,255,0.7)', fontSize: 12, lineHeight: 18, fontFamily: 'Inter_400Regular', marginTop: 8 },
+  heroStats: { flexDirection: 'row', gap: 30, marginTop: 17, paddingTop: 13, borderTopWidth: 1, borderTopColor: 'rgba(255,255,255,0.15)' },
+  heroStatValue: { color: '#f59e0b', fontSize: 16, fontFamily: 'Inter_700Bold' },
+  heroStatLabel: { color: 'rgba(255,255,255,0.65)', fontSize: 10, marginTop: 2, fontFamily: 'Inter_400Regular' },
+  sectionHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 10 },
+  sectionTitle: { fontSize: 17, fontFamily: 'Inter_700Bold' },
+  sectionHint: { fontSize: 10, fontFamily: 'Inter_400Regular' },
+  grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  module: { width: '48.5%', minHeight: 194, borderRadius: 14, borderWidth: 1, padding: 12 },
+  moduleTop: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12 },
+  moduleIcon: { width: 40, height: 40, borderRadius: 12, alignItems: 'center', justifyContent: 'center' },
+  moduleTitle: { fontSize: 13, lineHeight: 17, fontFamily: 'Inter_700Bold' },
+  moduleDesc: { fontSize: 10, lineHeight: 15, marginTop: 5, fontFamily: 'Inter_400Regular' },
+  moduleBadge: { alignSelf: 'flex-start', borderRadius: 8, paddingHorizontal: 7, paddingVertical: 4, marginTop: 11 },
+  moduleBadgeTxt: { fontSize: 9, fontFamily: 'Inter_600SemiBold' },
+  notice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12, borderRadius: 12, marginTop: 16 },
+  noticeTxt: { flex: 1, fontSize: 11, lineHeight: 17, fontFamily: 'Inter_400Regular' },
+});

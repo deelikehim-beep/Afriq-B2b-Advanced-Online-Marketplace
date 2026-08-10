@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useRef, useState } from 'react';
 import {
@@ -65,6 +66,12 @@ export default function Chat() {
             <Text style={[styles.onlineTxt, { color: colors.mutedForeground }]}>{conv.online ? 'Online' : 'Offline'}</Text>
           </View>
         </View>
+        {conv.productName && (
+          <View style={[styles.productHeader, { backgroundColor: colors.brandBg }]}>
+            {conv.productImage && <Image source={{ uri: conv.productImage }} style={styles.productHeaderImg} />}
+            <Text numberOfLines={2} style={[styles.productHeaderTxt, { color: colors.brand }]}>{conv.productName}</Text>
+          </View>
+        )}
         <TouchableOpacity style={styles.headerBtn}>
           <Ionicons name="call-outline" size={20} color={colors.foreground} />
         </TouchableOpacity>
@@ -163,6 +170,9 @@ const styles = StyleSheet.create({
   onlineDot: { width: 7, height: 7, borderRadius: 4 },
   onlineTxt: { fontSize: 11, fontFamily: 'Inter_400Regular' },
   headerBtn: { width: 36, height: 36, justifyContent: 'center', alignItems: 'center' },
+  productHeader: { maxWidth: 104, flexDirection: 'row', alignItems: 'center', gap: 4, padding: 4, borderRadius: 8 },
+  productHeaderImg: { width: 24, height: 24, borderRadius: 4 },
+  productHeaderTxt: { flex: 1, fontSize: 9, fontFamily: 'Inter_600SemiBold' },
 
   msgRow: { flexDirection: 'row', marginVertical: 2 },
   msgRowMe: { justifyContent: 'flex-end' },

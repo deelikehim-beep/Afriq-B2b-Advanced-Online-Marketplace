@@ -243,6 +243,46 @@ export default function Wallet() {
           </View>
         </KeyboardAvoidingView>
       </Modal>
+
+      <Modal visible={modal === 'escrow'} transparent animationType="slide" onRequestClose={() => setModal(null)}>
+        <View style={styles.escrowModalOverlay}>
+          <View style={[styles.escrowModal, { backgroundColor: colors.card, paddingBottom: insets.bottom + 18 }]}>
+            <View style={styles.modalPill} />
+            <View style={styles.escrowModalTitleRow}>
+              <View style={[styles.escrowModalIcon, { backgroundColor: colors.goldBg }]}>
+                <Ionicons name="shield-checkmark" size={24} color={colors.goldDark} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={[styles.modalTitle, { color: colors.foreground }]}>AFRIQ Escrow</Text>
+                <Text style={[styles.modalBal, { color: colors.mutedForeground }]}>Your cross-border trade protection layer</Text>
+              </View>
+              <TouchableOpacity onPress={() => setModal(null)}><Ionicons name="close" size={21} color={colors.mutedForeground} /></TouchableOpacity>
+            </View>
+            <View style={[styles.escrowHighlight, { backgroundColor: colors.brandBg }]}>
+              <Text style={[styles.escrowHighlightLabel, { color: colors.mutedForeground }]}>Currently held in escrow</Text>
+              <Text style={[styles.escrowHighlightValue, { color: colors.brand }]}>{fmt(user.escrowLocked)}</Text>
+              <Text style={[styles.escrowHighlightSub, { color: colors.mutedForeground }]}>Released only after delivery confirmation</Text>
+            </View>
+            {[
+              ['lock-closed', 'Pay safely', 'Funds stay protected while your supplier prepares the order.'],
+              ['navigate-outline', 'Track the trade', 'Follow shipping, customs and delivery milestones in one place.'],
+              ['checkmark-circle-outline', 'Release or dispute', 'Confirm delivery to release funds, or open a demo dispute.'],
+            ].map(([icon, title, desc]) => (
+              <View key={title} style={styles.escrowStepRow}>
+                <View style={[styles.escrowStepIcon, { backgroundColor: colors.background }]}><Ionicons name={icon as any} size={17} color={colors.brand} /></View>
+                <View style={{ flex: 1 }}><Text style={[styles.escrowStepTitle, { color: colors.foreground }]}>{title}</Text><Text style={[styles.escrowStepDesc, { color: colors.mutedForeground }]}>{desc}</Text></View>
+              </View>
+            ))}
+            <View style={[styles.bvnNotice, { backgroundColor: colors.goldBg }]}>
+              <Ionicons name="time-outline" size={18} color={colors.goldDark} />
+              <Text style={[styles.bvnNoticeText, { color: colors.goldDeep }]}>Demo policy: wallets with no activity for 5 months may require a fresh BVN/KYC check before transfers are re-enabled.</Text>
+            </View>
+            <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: colors.brand }]} onPress={() => setModal(null)}>
+              <Text style={styles.confirmBtnTxt}>Got it</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -293,6 +333,20 @@ const styles = StyleSheet.create({
   modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.5)' },
   modalSheet: { position: 'absolute', bottom: 0, left: 0, right: 0 },
   modalContent: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
+  escrowModalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.5)' },
+  escrowModal: { borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 24 },
+  escrowModalTitleRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 18 },
+  escrowModalIcon: { width: 48, height: 48, borderRadius: 15, alignItems: 'center', justifyContent: 'center' },
+  escrowHighlight: { borderRadius: 14, padding: 14, marginBottom: 14 },
+  escrowHighlightLabel: { fontSize: 11, fontFamily: 'Inter_400Regular' },
+  escrowHighlightValue: { fontSize: 23, fontFamily: 'Inter_700Bold', marginTop: 3 },
+  escrowHighlightSub: { fontSize: 10, fontFamily: 'Inter_400Regular', marginTop: 3 },
+  escrowStepRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, marginBottom: 13 },
+  escrowStepIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  escrowStepTitle: { fontSize: 12, fontFamily: 'Inter_700Bold' },
+  escrowStepDesc: { fontSize: 10, lineHeight: 15, fontFamily: 'Inter_400Regular', marginTop: 2 },
+  bvnNotice: { flexDirection: 'row', gap: 8, alignItems: 'flex-start', padding: 11, borderRadius: 11, marginTop: 1, marginBottom: 16 },
+  bvnNoticeText: { flex: 1, fontSize: 10, lineHeight: 15, fontFamily: 'Inter_500Medium' },
   modalPill: { width: 40, height: 4, backgroundColor: '#e5e7eb', borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
   modalTitle: { fontSize: 20, fontFamily: 'Inter_700Bold', marginBottom: 4 },
   modalBal: { fontSize: 13, fontFamily: 'Inter_400Regular', marginBottom: 20 },

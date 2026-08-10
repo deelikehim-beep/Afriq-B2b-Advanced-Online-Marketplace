@@ -1,13 +1,13 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React from 'react';
-import { Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Modal, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/contexts/AppContext';
 import { useAuth } from '@/contexts/AuthContext';
-import { fmt } from '@/constants/data';
+import { AFRICAN_COUNTRIES, fmt } from '@/constants/data';
 
 const SETTINGS = [
   { id: 'business', label: 'Business Profile', icon: 'briefcase-outline', desc: 'Edit company details' },
@@ -24,11 +24,20 @@ export default function Profile() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user, orders, transactions } = useApp();
+  const { user, orders, transactions, savedItems, updateUserProfile } = useApp();
   const { logout } = useAuth();
 
   const completedOrders = orders.filter(o => o.status === 'completed').length;
   const totalSpent = transactions.filter(t => t.type === 'escrow_lock').reduce((s, t) => s + t.amount, 0);
+  const [editVisible, setEditVisible] = useState(false);
+  const [draft, setDraft] = useState({
+    businessName: user.businessName,
+    businessType: user.businessType,
+    storeLocation: user.storeLocation ?? '',
+    storeAddress: user.storeAddress ?? '',
+    website: user.website ?? '',
+    businessDescription: user.businessDescription ?? '',
+  });
 
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
@@ -131,6 +140,24 @@ export default function Profile() {
           </TouchableOpacity>
         </View>
 
+        <View style={[styles.quickLinks, { backgroundColor: colors.card }]}>
+          <TouchableOpacity style={styles.quickLink} onPress={() => router.push('/saved')}>
+            <View style={[styles.quickIcon, { backgroundColor: colors.goldBg }]}><Ionicons name="bookmark" size={18} color={colors.goldDark} /></View>
+            <Text style={[styles.quickValue, { color: colors.foreground }]}>{savedItems.length}</Text>
+            <Text style={[styles.quickLabel, { color: colors.mutedForeground }]}>Saved goods</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickLink} onPress={() => router.push('/business-suite' as any)}>
+            <View style={[styles.quickIcon, { backgroundColor: colors.navyBg }]}><Ionicons name="grid-outline" size={18} color={colors.navy} /></View>
+            <Text style={[styles.quickValue, { color: colors.foreground }]}>Suite</Text>
+            <Text style={[styles.quickLabel, { color: colors.mutedForeground }]}>Merchant tools</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.quickLink} onPress={() => setEditVisible(true)}>
+            <View style={[styles.quickIcon, { backgroundColor: colors.brandBg }]}><Ionicons name="create-outline" size={18} color={colors.brand} /></View>
+            <Text style={[styles.quickValue, { color: colors.foreground }]}>Edit</Text>
+            <Text style={[styles.quickLabel, { color: colors.mutedForeground }]}>Business profile</Text>
+          </TouchableOpacity>
+        </View>
+
         {/* Settings menu */}
         <View style={[styles.menuCard, { backgroundColor: colors.card }]}>
           {SETTINGS.map((s, i) => (
@@ -138,6 +165,10 @@ export default function Profile() {
               key={s.id}
               style={[styles.menuItem, i < SETTINGS.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
               activeOpacity={0.7}
+              onPress={() => {
+                if (s.id === 'business') setEditVisible(true);
+                if (s.id === 'support') Alert.alert('AFRIQ Support', 'Demo support desk: a trade specialist will respond within 4 hours.');
+              }}
             >
               <View style={[styles.menuIcon, { backgroundColor: colors.background }]}>
                 <Ionicons name={s.icon as any} size={20} color={colors.foreground} />
@@ -164,6 +195,37 @@ export default function Profile() {
 
         <Text style={[styles.versionTxt, { color: colors.mutedForeground }]}>AFRIQ v1.0.0 · Africa's B2B Marketplace</Text>
       </ScrollView>
+
+      <Modal visible={editVisible} transparent animationType="slide" onRequestClose={() => setEditVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.editSheet, { backgroundColor: colors.card }]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.editHeader}>
+              <View><Text style={[styles.editTitle, { color: colors.foreground }]}>Business profile</Text><Text style={[styles.editSub, { color: colors.mutedForeground }]}>Shown to buyers on your store page</Text></View>
+              <TouchableOpacity onPress={() => setEditVisible(false)}><Ionicons name="close" size={22} color={colors.mutedForeground} /></TouchableOpacity>
+            </View>
+            <ScrollView showsVerticalScrollIndicator={false}>
+              {([
+                ['businessName', 'Business / store name'],
+                ['businessType', 'Business type'],
+                ['storeLocation', 'Market / city location'],
+                ['storeAddress', 'Full store address'],
+                ['website', 'Website (optional)'],
+              ] as const).map(([key, label]) => (
+                <View key={key} style={styles.field}>
+                  <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{label}</Text>
+                  <TextInput value={draft[key]} onChangeText={value => setDraft(prev => ({ ...prev, [key]: value }))} placeholder={label} placeholderTextColor={colors.mutedForeground} style={[styles.fieldInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />
+                </View>
+              ))}
+              <Text style={[styles.fieldLabel, { color: colors.foreground }]}>About your company</Text>
+              <TextInput value={draft.businessDescription} onChangeText={value => setDraft(prev => ({ ...prev, businessDescription: value }))} multiline placeholder="What do you sell and who do you serve?" placeholderTextColor={colors.mutedForeground} style={[styles.fieldInput, styles.textArea, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />
+              <TouchableOpacity style={[styles.saveProfileBtn, { backgroundColor: colors.brand }]} onPress={() => { updateUserProfile(draft); setEditVisible(false); Alert.alert('Profile updated', 'Your store details are now visible to buyers.'); }}>
+                <Text style={styles.saveProfileTxt}>Save business details</Text>
+              </TouchableOpacity>
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -219,4 +281,21 @@ const styles = StyleSheet.create({
   logoutBtn: { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, marginHorizontal: 16, marginTop: 16, height: 52, borderRadius: 14, borderWidth: 1 },
   logoutTxt: { fontSize: 15, fontFamily: 'Inter_600SemiBold', color: '#ef4444' },
   versionTxt: { textAlign: 'center', fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 16 },
+  quickLinks: { marginHorizontal: 16, marginTop: 12, borderRadius: 16, padding: 12, flexDirection: 'row', justifyContent: 'space-around' },
+  quickLink: { alignItems: 'center', gap: 4, flex: 1 },
+  quickIcon: { width: 36, height: 36, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
+  quickValue: { fontSize: 13, fontFamily: 'Inter_700Bold' },
+  quickLabel: { fontSize: 10, fontFamily: 'Inter_400Regular', textAlign: 'center' },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  editSheet: { maxHeight: '88%', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 18 },
+  sheetHandle: { width: 42, height: 4, borderRadius: 2, backgroundColor: '#d1d5db', alignSelf: 'center', marginBottom: 14 },
+  editHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
+  editTitle: { fontSize: 19, fontFamily: 'Inter_700Bold' },
+  editSub: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 3 },
+  field: { marginBottom: 12 },
+  fieldLabel: { fontSize: 12, fontFamily: 'Inter_600SemiBold', marginBottom: 6 },
+  fieldInput: { height: 44, borderRadius: 10, borderWidth: 1, paddingHorizontal: 12, fontSize: 13, fontFamily: 'Inter_400Regular' },
+  textArea: { height: 84, paddingTop: 11, textAlignVertical: 'top' },
+  saveProfileBtn: { height: 48, borderRadius: 12, justifyContent: 'center', alignItems: 'center', marginVertical: 12 },
+  saveProfileTxt: { color: '#ffffff', fontSize: 14, fontFamily: 'Inter_700Bold' },
 });

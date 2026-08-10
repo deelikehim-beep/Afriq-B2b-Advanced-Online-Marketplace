@@ -8,25 +8,30 @@ import {
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/contexts/AppContext';
-import { fmt, type CartItem } from '@/constants/data';
-import { ESCROW_FEE_RATE, DELIVERY_FEE_PER_SUPPLIER } from '@/constants/config';
+import { calculateShippingFee, fmt, PRODUCT_LOGISTICS, type CartItem } from '@/constants/data';
+import { ESCROW_FEE_RATE } from '@/constants/config';
 
 export default function Cart() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { cart, cartTotal, removeFromCart, updateCartQty, user } = useApp();
+  const { cart, cartTotal, removeFromCart, updateCartQty, saveItem, user } = useApp();
 
   const suppliers = [...new Set(cart.map(i => i.supplierId))];
   const escrowFee = Math.round(cartTotal * ESCROW_FEE_RATE);
-  const deliveryFee = suppliers.length * DELIVERY_FEE_PER_SUPPLIER;
+  const deliveryFee = cart.reduce((sum, item) => {
+    const logistics = PRODUCT_LOGISTICS[item.productId] ?? { weightKg: 1, sizeClass: 'small' as const };
+    return sum + calculateShippingFee(logistics.weightKg, logistics.sizeClass, user.location.includes('Nigeria') ? 120 : 900, item.qty);
+  }, 0);
   const grandTotal = cartTotal + escrowFee + deliveryFee;
 
   const canCheckout = grandTotal <= user.balance;
 
-  const handleRemove = (productId: string, variant: string, name: string) => {
+  const handleRemove = (item: CartItem) => {
+    const { productId, variant, name } = item;
     Alert.alert('Remove Item', `Remove "${name}" from cart?`, [
       { text: 'Cancel', style: 'cancel' },
+      { text: 'Save for later', onPress: () => { saveItem(item); removeFromCart(productId, variant); } },
       { text: 'Remove', style: 'destructive', onPress: () => removeFromCart(productId, variant) },
     ]);
   };
@@ -104,7 +109,7 @@ export default function Cart() {
                 </View>
               </View>
             </View>
-            <TouchableOpacity style={styles.removeBtn} onPress={() => handleRemove(item.productId, item.variant, item.name)}>
+            <TouchableOpacity style={styles.removeBtn} onPress={() => handleRemove(item)}>
               <Ionicons name="close" size={16} color={colors.mutedForeground} />
             </TouchableOpacity>
           </View>

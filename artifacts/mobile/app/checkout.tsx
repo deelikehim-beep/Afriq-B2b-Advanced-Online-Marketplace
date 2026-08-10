@@ -4,13 +4,13 @@ import * as Haptics from 'expo-haptics';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
 import {
-  ActivityIndicator, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View,
+  ActivityIndicator, Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/contexts/AppContext';
-import { fmt } from '@/constants/data';
-import { ESCROW_FEE_RATE, DELIVERY_FEE_PER_SUPPLIER } from '@/constants/config';
+import { calculateShippingFee, fmt, PRODUCT_LOGISTICS } from '@/constants/data';
+import { ESCROW_FEE_RATE } from '@/constants/config';
 
 export default function Checkout() {
   const colors = useColors();
@@ -20,10 +20,14 @@ export default function Checkout() {
   const [loading, setLoading] = useState(false);
   const [success, setSuccess] = useState(false);
   const [orderId, setOrderId] = useState('');
+  const [acknowledged, setAcknowledged] = useState(false);
 
   const suppliers = [...new Set(cart.map(i => i.supplierId))];
   const escrowFee = Math.round(cartTotal * ESCROW_FEE_RATE);
-  const deliveryFee = suppliers.length * DELIVERY_FEE_PER_SUPPLIER;
+  const deliveryFee = cart.reduce((sum, item) => {
+    const logistics = PRODUCT_LOGISTICS[item.productId] ?? { weightKg: 1, sizeClass: 'small' as const };
+    return sum + calculateShippingFee(logistics.weightKg, logistics.sizeClass, user.location.includes('Nigeria') ? 120 : 900, item.qty);
+  }, 0);
   const grandTotal = cartTotal + escrowFee + deliveryFee;
 
   const handleConfirm = async () => {
@@ -94,6 +98,21 @@ export default function Checkout() {
             </View>
           ))}
         </View>
+
+        <TouchableOpacity
+          style={[styles.confirmationCard, { backgroundColor: acknowledged ? colors.brandBg : colors.card, borderColor: acknowledged ? colors.brand : colors.border }]}
+          onPress={() => setAcknowledged(value => !value)}
+          activeOpacity={0.85}
+        >
+          <View style={[styles.confirmationBox, { borderColor: acknowledged ? colors.brand : colors.border, backgroundColor: acknowledged ? colors.brand : colors.card }]}>
+            {acknowledged && <Ionicons name="checkmark" size={15} color="#ffffff" />}
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.confirmationTitle, { color: colors.foreground }]}>I have reviewed this order</Text>
+            <Text style={[styles.confirmationText, { color: colors.mutedForeground }]}>I understand the goods, selected variant, quantity, delivery estimate, shipping fee, and escrow release terms.</Text>
+          </View>
+          <Ionicons name="document-text-outline" size={20} color={colors.brand} />
+        </TouchableOpacity>
 
         {/* Delivery */}
         <View style={[styles.section, { backgroundColor: colors.card }]}>
@@ -179,7 +198,13 @@ export default function Checkout() {
         </View>
         <TouchableOpacity
           style={[styles.confirmBtn, { backgroundColor: loading ? colors.muted : colors.brand }]}
-          onPress={handleConfirm}
+          onPress={() => {
+            if (!acknowledged) {
+              Alert.alert('Please confirm your order', 'Review the item details and tick the confirmation box before paying.');
+              return;
+            }
+            handleConfirm();
+          }}
           disabled={loading}
           activeOpacity={0.85}
         >
@@ -239,6 +264,10 @@ const styles = StyleSheet.create({
   walletBal: { fontSize: 12, fontFamily: 'Inter_400Regular', marginTop: 2 },
   walletSufficient: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 5, borderRadius: 10 },
   walletSufficientTxt: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
+  confirmationCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: 14, borderWidth: 1.5, padding: 14 },
+  confirmationBox: { width: 23, height: 23, borderRadius: 6, borderWidth: 1.5, alignItems: 'center', justifyContent: 'center', marginTop: 1 },
+  confirmationTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', marginBottom: 4 },
+  confirmationText: { fontSize: 11, lineHeight: 17, fontFamily: 'Inter_400Regular' },
 
   confirmBar: { position: 'absolute', bottom: 0, left: 0, right: 0, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: 16, borderTopWidth: 1 },
   confirmTotal: { fontSize: 20, fontFamily: 'Inter_700Bold' },

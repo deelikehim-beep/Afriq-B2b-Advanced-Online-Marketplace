@@ -1,13 +1,17 @@
-import React, { createContext, useContext, useState } from 'react';
-import { DEMO_MODE, ESCROW_FEE_RATE, DELIVERY_FEE_PER_SUPPLIER } from '@/constants/config';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import React, { createContext, useContext, useEffect, useState } from 'react';
+import { DEMO_MODE, ESCROW_FEE_RATE } from '@/constants/config';
 import {
   DEMO_ORDERS, DEMO_CONVERSATIONS, DEMO_TRANSACTIONS, DEMO_NOTIFICATIONS, DEMO_USER,
-  type CartItem, type Order, type Conversation, type Transaction, type Notif, type AppUser,
+  type CartItem, type Order, type Conversation, type Transaction, type Notif, type AppUser, type Product,
+  PRODUCT_LOGISTICS, calculateShippingFee,
 } from '@/constants/data';
 
 interface AppContextType {
   user: AppUser;
   cart: CartItem[];
+  savedItems: CartItem[];
+  followedSuppliers: string[];
   orders: Order[];
   conversations: Conversation[];
   transactions: Transaction[];
@@ -19,6 +23,13 @@ interface AppContextType {
   addToCart: (item: CartItem) => void;
   removeFromCart: (productId: string, variant: string) => void;
   updateCartQty: (productId: string, variant: string, qty: number) => void;
+  saveItem: (item: CartItem) => void;
+  removeSavedItem: (productId: string, variant: string) => void;
+  moveSavedToCart: (item: CartItem) => void;
+  isSaved: (productId: string, variant?: string) => boolean;
+  updateUserProfile: (updates: Partial<AppUser>) => void;
+  toggleFollowSupplier: (supplierId: string) => void;
+  startProductConversation: (product: Product) => string;
   clearCart: () => void;
   placeOrder: () => string;
   confirmDelivery: (orderId: string) => void;
@@ -36,10 +47,29 @@ const AppContext = createContext<AppContextType | null>(null);
 export function AppProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AppUser>(DEMO_USER);
   const [cart, setCart] = useState<CartItem[]>([]);
+  const [savedItems, setSavedItems] = useState<CartItem[]>([]);
+  const [followedSuppliers, setFollowedSuppliers] = useState<string[]>([]);
   const [orders, setOrders] = useState<Order[]>(DEMO_MODE ? DEMO_ORDERS : []);
   const [conversations, setConversations] = useState<Conversation[]>(DEMO_MODE ? DEMO_CONVERSATIONS : []);
   const [transactions, setTransactions] = useState<Transaction[]>(DEMO_MODE ? DEMO_TRANSACTIONS : []);
   const [notifications, setNotifications] = useState<Notif[]>(DEMO_MODE ? DEMO_NOTIFICATIONS : []);
+
+  useEffect(() => {
+    AsyncStorage.getItem('@afriq_saved_items').then(value => {
+      if (value) setSavedItems(JSON.parse(value));
+    }).catch(() => {});
+    AsyncStorage.getItem('@afriq_profile').then(value => {
+      if (value) setUser(prev => ({ ...prev, ...JSON.parse(value) }));
+    }).catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    AsyncStorage.setItem('@afriq_saved_items', JSON.stringify(savedItems)).catch(() => {});
+  }, [savedItems]);
+
+  useEffect(() => {
+    AsyncStorage.setItem('@afriq_profile', JSON.stringify(user)).catch(() => {});
+  }, [user]);
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const cartTotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
@@ -68,12 +98,70 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     );
   };
 
+  const saveItem = (item: CartItem) => {
+    setSavedItems(prev => prev.some(s => s.productId === item.productId && s.variant === item.variant)
+      ? prev
+      : [item, ...prev]);
+  };
+
+  const removeSavedItem = (productId: string, variant: string) => {
+    setSavedItems(prev => prev.filter(s => !(s.productId === productId && s.variant === variant)));
+  };
+
+  const moveSavedToCart = (item: CartItem) => {
+    addToCart(item);
+    removeSavedItem(item.productId, item.variant);
+  };
+
+  const isSaved = (productId: string, variant = '') =>
+    savedItems.some(s => s.productId === productId && (!variant || s.variant === variant));
+
+  const updateUserProfile = (updates: Partial<AppUser>) => {
+    setUser(prev => ({ ...prev, ...updates }));
+  };
+
+  const toggleFollowSupplier = (supplierId: string) => {
+    setFollowedSuppliers(prev => prev.includes(supplierId)
+      ? prev.filter(id => id !== supplierId)
+      : [...prev, supplierId]);
+  };
+
+  const startProductConversation = (product: Product) => {
+    const existing = conversations.find(c => c.supplierId === product.supplierId && c.productId === product.id);
+    if (existing) return existing.id;
+    const conversation: Conversation = {
+      id: `conv_product_${product.id}_${product.supplierId}`,
+      with: product.supplier,
+      avatar: product.supplier.split(' ').map(w => w[0]).join('').slice(0, 2),
+      online: true,
+      supplierId: product.supplierId,
+      productId: product.id,
+      productName: product.name,
+      productImage: product.image,
+      lastMessage: `Inquiry about ${product.name}`,
+      time: 'Just now',
+      unread: 0,
+      messages: [{
+        id: `m_product_${product.id}`,
+        sender: 'me',
+        text: `Hi, I'm interested in "${product.name}". Please confirm stock, variant options, MOQ, and delivery time.`,
+        time: 'Just now',
+        type: 'text',
+      }],
+    };
+    setConversations(prev => [conversation, ...prev]);
+    return conversation.id;
+  };
+
   const clearCart = () => setCart([]);
 
   const placeOrder = () => {
     const orderId = 'ORD-' + Date.now().toString().slice(-9);
     const escrowFee = Math.round(cartTotal * ESCROW_FEE_RATE);
-    const deliveryFee = DELIVERY_FEE_PER_SUPPLIER;
+    const deliveryFee = cart.reduce((sum, item) => {
+      const logistics = PRODUCT_LOGISTICS[item.productId] ?? { weightKg: 1, sizeClass: 'small' as const };
+      return sum + calculateShippingFee(logistics.weightKg, logistics.sizeClass, user.location.includes('Nigeria') ? 120 : 900, item.qty);
+    }, 0);
     const grandTotal = cartTotal + escrowFee + deliveryFee;
 
     const newOrders: Order[] = cart.map(item => ({
@@ -86,8 +174,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       unitPrice: item.price,
       totalAmount: item.price * item.qty,
       escrowFee: Math.round(item.price * item.qty * ESCROW_FEE_RATE),
-      grandTotal: item.price * item.qty + Math.round(item.price * item.qty * ESCROW_FEE_RATE) + DELIVERY_FEE_PER_SUPPLIER,
-      deliveryFee: DELIVERY_FEE_PER_SUPPLIER,
+       grandTotal: item.price * item.qty + Math.round(item.price * item.qty * ESCROW_FEE_RATE) + calculateShippingFee(
+         (PRODUCT_LOGISTICS[item.productId] ?? { weightKg: 1, sizeClass: 'small' as const }).weightKg,
+         (PRODUCT_LOGISTICS[item.productId] ?? { weightKg: 1, sizeClass: 'small' as const }).sizeClass,
+         user.location.includes('Nigeria') ? 120 : 900,
+         item.qty,
+       ),
+       deliveryFee: calculateShippingFee(
+         (PRODUCT_LOGISTICS[item.productId] ?? { weightKg: 1, sizeClass: 'small' as const }).weightKg,
+         (PRODUCT_LOGISTICS[item.productId] ?? { weightKg: 1, sizeClass: 'small' as const }).sizeClass,
+         user.location.includes('Nigeria') ? 120 : 900,
+         item.qty,
+       ),
       variant: item.variant,
       status: 'processing' as const,
       progress: 20,
@@ -233,9 +331,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-      user, cart, orders, conversations, transactions, notifications,
+       user, cart, savedItems, followedSuppliers, orders, conversations, transactions, notifications,
       cartCount, cartTotal, unreadMessages, unreadNotifs,
-      addToCart, removeFromCart, updateCartQty, clearCart,
+       addToCart, removeFromCart, updateCartQty, saveItem, removeSavedItem, moveSavedToCart, isSaved,
+       updateUserProfile, toggleFollowSupplier, startProductConversation, clearCart,
       placeOrder, confirmDelivery,
       sendMessage, markMessagesRead,
       markNotifRead, markAllNotifsRead,

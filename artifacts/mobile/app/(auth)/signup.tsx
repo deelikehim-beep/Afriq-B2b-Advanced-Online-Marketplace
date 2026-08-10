@@ -1,20 +1,28 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import {
-  Animated, Platform, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View,
+  Animated, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
+import { useApp } from '@/contexts/AppContext';
+import { AFRICAN_COUNTRIES } from '@/constants/data';
 import { DEMO_MODE } from '@/constants/config';
 
 export default function Signup() {
   const router = useRouter();
   const { login } = useAuth();
+  const { updateUserProfile } = useApp();
   const insets = useSafeAreaInsets();
   const cardAnim = useRef(new Animated.Value(380)).current;
   const bgFade = useRef(new Animated.Value(0)).current;
+  const [showOnboarding, setShowOnboarding] = useState(false);
+  const [country, setCountry] = useState('NG');
+  const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
+  const [businessName, setBusinessName] = useState('');
+  const [storeLocation, setStoreLocation] = useState('');
 
   useEffect(() => {
     Animated.parallel([
@@ -24,6 +32,19 @@ export default function Signup() {
   }, []);
 
   const handleAuth = async (method: string) => {
+    setShowOnboarding(true);
+  };
+
+  const finishAuth = async (method: string) => {
+    const selected = AFRICAN_COUNTRIES.find(item => item.code === country);
+    updateUserProfile({
+      residentCountry: selected?.name ?? 'Nigeria',
+      residentCountryCode: country,
+      businessName: businessName.trim() || (role === 'seller' ? 'My AFRIQ Store' : 'My Trading Business'),
+      businessType: role === 'seller' ? 'Retailer & Supplier' : 'Buyer & Distributor',
+      storeLocation: storeLocation.trim() || selected?.name,
+      location: storeLocation.trim() || selected?.name || 'Africa',
+    });
     await login(method);
     router.replace('/(tabs)');
   };
@@ -57,6 +78,26 @@ export default function Signup() {
           </View>
         </LinearGradient>
       </Animated.View>
+      <Modal visible={showOnboarding} transparent animationType="slide" onRequestClose={() => setShowOnboarding(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.onboardingSheet, { paddingBottom: insets.bottom + 20 }]}>
+            <View style={styles.pill} />
+            <Text style={styles.onboardingTitle}>Set up your AFRIQ profile</Text>
+            <Text style={styles.onboardingSub}>This helps us rank nearby suppliers and tailor your trade workspace.</Text>
+            <Text style={styles.onboardingLabel}>I am joining as</Text>
+            <View style={styles.roleRow}>
+              {(['buyer', 'seller'] as const).map(item => <TouchableOpacity key={item} onPress={() => setRole(item)} style={[styles.roleBtn, role === item && styles.roleBtnActive]}><Ionicons name={item === 'buyer' ? 'cart-outline' : 'storefront-outline'} size={18} color={role === item ? '#ffffff' : '#059669'} /><Text style={[styles.roleTxt, role === item && styles.roleTxtActive]}>{item === 'buyer' ? 'Buyer / importer' : 'Seller / supplier'}</Text></TouchableOpacity>)}
+            </View>
+            <Text style={styles.onboardingLabel}>Resident country</Text>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingBottom: 4 }}>
+              {AFRICAN_COUNTRIES.filter(item => item.code !== 'all').map(item => <TouchableOpacity key={item.code} onPress={() => setCountry(item.code)} style={[styles.countryBtn, country === item.code && styles.countryBtnActive]}><Text style={styles.countryFlag}>{item.flag}</Text><Text style={[styles.countryTxt, country === item.code && styles.countryTxtActive]}>{item.name}</Text></TouchableOpacity>)}
+            </ScrollView>
+            <TextInput value={businessName} onChangeText={setBusinessName} placeholder={role === 'seller' ? 'Store or company name' : 'Business name (optional)'} placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
+            <TextInput value={storeLocation} onChangeText={setStoreLocation} placeholder="City, market or store location" placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
+            <TouchableOpacity style={styles.continueBtn} onPress={() => finishAuth('demo')}><Text style={styles.continueTxt}>Enter AFRIQ marketplace</Text><Ionicons name="arrow-forward" size={17} color="#ffffff" /></TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
 
       {/* Card */}
       <Animated.View
@@ -194,4 +235,22 @@ const styles = StyleSheet.create({
 
   terms: { fontSize: 12, color: '#9ca3af', textAlign: 'center', lineHeight: 18, marginTop: 12, fontFamily: 'Inter_400Regular' },
   termsLink: { color: '#059669', fontFamily: 'Inter_500Medium' },
+  modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
+  onboardingSheet: { backgroundColor: '#ffffff', borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 22, paddingTop: 12 },
+  onboardingTitle: { fontSize: 21, color: '#111827', fontFamily: 'Inter_700Bold' },
+  onboardingSub: { fontSize: 12, lineHeight: 18, color: '#6b7280', fontFamily: 'Inter_400Regular', marginTop: 5, marginBottom: 17 },
+  onboardingLabel: { fontSize: 12, color: '#111827', fontFamily: 'Inter_600SemiBold', marginBottom: 8, marginTop: 8 },
+  roleRow: { flexDirection: 'row', gap: 8 },
+  roleBtn: { flex: 1, height: 48, borderRadius: 11, borderWidth: 1, borderColor: '#d1fae5', flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6 },
+  roleBtnActive: { backgroundColor: '#059669', borderColor: '#059669' },
+  roleTxt: { color: '#047857', fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+  roleTxtActive: { color: '#ffffff' },
+  countryBtn: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderColor: '#e5e7eb', paddingHorizontal: 9, paddingVertical: 8, borderRadius: 16 },
+  countryBtnActive: { backgroundColor: '#ecfdf5', borderColor: '#059669' },
+  countryFlag: { fontSize: 14 },
+  countryTxt: { color: '#374151', fontSize: 10, fontFamily: 'Inter_500Medium' },
+  countryTxtActive: { color: '#047857' },
+  onboardingInput: { height: 45, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, paddingHorizontal: 12, fontSize: 13, color: '#111827', marginTop: 10 },
+  continueBtn: { height: 49, borderRadius: 12, backgroundColor: '#059669', marginTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  continueTxt: { color: '#ffffff', fontSize: 14, fontFamily: 'Inter_700Bold' },
 });

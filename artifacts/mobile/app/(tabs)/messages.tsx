@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
 import React, { useState } from 'react';
-import { FlatList, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { FlatList, Image, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/contexts/AppContext';
@@ -77,6 +77,16 @@ export default function Messages() {
 
             {/* Content */}
             <View style={styles.rowContent}>
+              {item.productName && (
+                <View style={[styles.productContext, { backgroundColor: colors.brandBg }]}>
+                  {item.productImage && <Image source={{ uri: item.productImage }} style={styles.productThumb} />}
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.productContextLabel, { color: colors.brand }]}>Inquiry about</Text>
+                    <Text numberOfLines={1} style={[styles.productContextName, { color: colors.foreground }]}>{item.productName}</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={13} color={colors.brand} />
+                </View>
+              )}
               <View style={styles.rowTop}>
                 <Text style={[styles.name, { color: colors.foreground }]} numberOfLines={1}>{item.with}</Text>
                 <Text style={[styles.time, { color: colors.mutedForeground }]}>{item.time}</Text>
@@ -123,6 +133,10 @@ const styles = StyleSheet.create({
   time: { fontSize: 11, fontFamily: 'Inter_400Regular' },
   rowBottom: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   preview: { flex: 1, fontSize: 13, lineHeight: 18 },
+  productContext: { flexDirection: 'row', alignItems: 'center', gap: 7, padding: 6, borderRadius: 9, marginBottom: 6 },
+  productThumb: { width: 28, height: 28, borderRadius: 5 },
+  productContextLabel: { fontSize: 9, fontFamily: 'Inter_500Medium' },
+  productContextName: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
   unreadBadge: { minWidth: 20, height: 20, borderRadius: 10, justifyContent: 'center', alignItems: 'center', paddingHorizontal: 6 },
   unreadBadgeTxt: { fontSize: 11, color: '#ffffff', fontFamily: 'Inter_700Bold' },
   empty: { alignItems: 'center', paddingTop: 80, gap: 12 },

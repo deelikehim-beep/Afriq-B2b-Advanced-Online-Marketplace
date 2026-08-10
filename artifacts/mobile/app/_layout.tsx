@@ -32,6 +32,10 @@ function RootLayoutNav() {
       <Stack.Screen name="order/[id]" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="chat/[id]" options={{ animation: 'slide_from_right' }} />
       <Stack.Screen name="notifications" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="supplier/[id]" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="category/[id]" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="saved" options={{ animation: 'slide_from_right' }} />
+      <Stack.Screen name="business-suite" options={{ animation: 'slide_from_right' }} />
     </Stack>
   );
 }
