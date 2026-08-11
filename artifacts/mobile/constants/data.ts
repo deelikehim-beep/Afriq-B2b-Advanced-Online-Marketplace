@@ -381,6 +381,188 @@ export const CATEGORIES: Category[] = [
   { id: 'energy', name: 'Energy & Solar', icon: 'sunny', count: 88 },
 ];
 
+// ─── Category taxonomy ────────────────────────────────────────
+// The marketplace keeps discovery hierarchical: category → subcategory →
+// type → brand → model. This is demo catalog data until seller catalog APIs
+// are connected, but the shape is intentionally ready for those APIs.
+export interface CategoryBrand {
+  id: string;
+  name: string;
+  models: { id: string; name: string }[];
+}
+
+export interface CategoryType {
+  id: string;
+  name: string;
+  count: number;
+  brands: CategoryBrand[];
+}
+
+export interface CategorySubcategory {
+  id: string;
+  name: string;
+  icon: string;
+  count: number;
+  types: CategoryType[];
+}
+
+export interface CategoryTaxonomy {
+  categoryId: string;
+  subcategories: CategorySubcategory[];
+}
+
+const taxonomyBrand = (id: string, name: string, models: string[]): CategoryBrand => ({
+  id,
+  name,
+  models: models.map((model, index) => ({ id: `${id}-${index + 1}`, name: model })),
+});
+
+const taxonomyType = (id: string, name: string, count: number, brands: CategoryBrand[]): CategoryType => ({
+  id, name, count, brands,
+});
+
+const genericTaxonomy = (categoryId: string, labels: string[]): CategoryTaxonomy => ({
+  categoryId,
+  subcategories: labels.map((label, index) => ({
+    id: `${categoryId}-${index + 1}`,
+    name: label,
+    icon: ['cube-outline', 'layers-outline', 'grid-outline'][index % 3],
+    count: Math.max(24, 120 - index * 23),
+    types: [
+      taxonomyType(`${categoryId}-${index + 1}-standard`, 'Standard', 68 - index * 8, [
+        taxonomyBrand(`${categoryId}-${index + 1}-brand-a`, 'AFRIQ Select', ['Trade Series', 'Pro Series']),
+        taxonomyBrand(`${categoryId}-${index + 1}-brand-b`, 'Market Choice', ['Classic', 'Premium']),
+      ]),
+      taxonomyType(`${categoryId}-${index + 1}-premium`, 'Premium', 42 - index * 5, [
+        taxonomyBrand(`${categoryId}-${index + 1}-brand-c`, 'Heritage', ['Signature', 'Executive']),
+        taxonomyBrand(`${categoryId}-${index + 1}-brand-d`, 'Nova', ['Plus', 'Max']),
+      ]),
+    ],
+  })),
+});
+
+export const CATEGORY_TAXONOMY: Record<string, CategoryTaxonomy> = {
+  textiles: {
+    categoryId: 'textiles',
+    subcategories: [
+      { id: 'wax-fabrics', name: 'Wax Fabrics', icon: 'color-palette-outline', count: 340, types: [
+        taxonomyType('ankara', 'Ankara / Wax Print', 156, [
+          taxonomyBrand('hollandais', 'Hollandais', ['Premium Wax', 'Gold Edition', 'Vlisco Inspired']),
+          taxonomyBrand('da viva', 'Da Viva', ['Classic Print', 'Royal Collection']),
+          taxonomyBrand('super-wax', 'Super Wax', ['6 Yards', '12 Yards']),
+        ]),
+        taxonomyType('lace', 'Lace & Embroidery', 92, [
+          taxonomyBrand('swiss-lace', 'Swiss Lace', ['Cord Lace', 'French Lace']),
+          taxonomyBrand('austrian', 'Austrian', ['Crystal Lace', 'Floral Lace']),
+        ]),
+      ] },
+      { id: 'ready-made', name: 'Ready-Made Garments', icon: 'shirt-outline', count: 210, types: [
+        taxonomyType('dresses', 'Dresses', 94, [taxonomyBrand('afriq-fashion', 'AFRIQ Fashion', ['Maxi Dress', 'Kaftan']), taxonomyBrand('zara-trade', 'Zara Trade', ['Midi Dress', 'Work Dress'])]),
+        taxonomyType('traditional-wear', 'Traditional Wear', 72, [taxonomyBrand('aso-oke', 'Aso Oke House', ['Agbada', 'Iro & Buba']), taxonomyBrand('kente-house', 'Kente House', ['Two Piece', 'Stole'])]),
+      ] },
+      { id: 'home-textiles', name: 'Home Textiles', icon: 'bed-outline', count: 128, types: [
+        taxonomyType('curtains', 'Curtains & Blinds', 54, [taxonomyBrand('royal-drape', 'Royal Drape', ['Blackout', 'Sheer']), taxonomyBrand('home-luxe', 'Home Luxe', ['Eyelet', 'Roman'])]),
+        taxonomyType('bedding', 'Bedding & Linen', 74, [taxonomyBrand('sleepwell', 'SleepWell', ['Queen Set', 'King Set']), taxonomyBrand('cotton-house', 'Cotton House', ['Hotel Grade', 'Organic'])]),
+      ] },
+    ],
+  },
+  electronics: {
+    categoryId: 'electronics',
+    subcategories: [
+      { id: 'computers', name: 'Laptops & Computers', icon: 'laptop-outline', count: 492, types: [
+        taxonomyType('laptops', 'Laptop', 208, [
+          taxonomyBrand('hp', 'HP', ['EliteBook 840', 'ProBook 450', 'Pavilion 15']),
+          taxonomyBrand('lenovo', 'Lenovo', ['ThinkPad T14', 'IdeaPad 3', 'Legion 5']),
+          taxonomyBrand('dell', 'Dell', ['Latitude 5420', 'Inspiron 15', 'XPS 13']),
+          taxonomyBrand('apple', 'Apple', ['MacBook Air M2', 'MacBook Pro M3']),
+        ]),
+        taxonomyType('desktop', 'Desktop Computer', 114, [taxonomyBrand('hp-desktop', 'HP', ['ProDesk 600', 'EliteDesk 800']), taxonomyBrand('dell-desktop', 'Dell', ['OptiPlex 7090', 'Precision 365'])]),
+        taxonomyType('servers', 'Server', 38, [taxonomyBrand('dell-server', 'Dell', ['PowerEdge R640', 'PowerEdge T150']), taxonomyBrand('hp-server', 'HPE', ['ProLiant DL380', 'MicroServer Gen10'])]),
+      ] },
+      { id: 'mobile-phones', name: 'Mobile Phones & Tablets', icon: 'phone-portrait-outline', count: 780, types: [
+        taxonomyType('smartphones', 'Smartphones', 420, [
+          taxonomyBrand('samsung', 'Samsung', ['Galaxy A14', 'Galaxy A24', 'Galaxy S23']),
+          taxonomyBrand('apple-iphone', 'Apple', ['iPhone 11', 'iPhone 13', 'iPhone 15']),
+          taxonomyBrand('infinix', 'Infinix', ['Hot 40', 'Note 30', 'Zero 30']),
+          taxonomyBrand('tecno', 'Tecno', ['Spark 10', 'Camon 20', 'Phantom V']),
+        ]),
+        taxonomyType('tablets', 'Tablets', 126, [taxonomyBrand('samsung-tab', 'Samsung', ['Galaxy Tab A8', 'Galaxy Tab S9']), taxonomyBrand('ipad', 'Apple', ['iPad 9th Gen', 'iPad Air'])]),
+        taxonomyType('feature-phones', 'Feature Phones', 74, [taxonomyBrand('nokia', 'Nokia', ['105', '110', '2660 Flip']), taxonomyBrand('itel', 'itel', ['2160', 'Magic 2'])]),
+      ] },
+      { id: 'tv-video', name: 'TV & Video Equipment', icon: 'tv-outline', count: 366, types: [
+        taxonomyType('smart-tv', 'Smart TV', 212, [taxonomyBrand('lg', 'LG', ['43-inch UHD', '55-inch NanoCell']), taxonomyBrand('hisense', 'Hisense', ['50-inch 4K', '65-inch ULED']), taxonomyBrand('tcl', 'TCL', ['43-inch Android TV', '55-inch QLED'])]),
+        taxonomyType('projectors', 'Projectors', 58, [taxonomyBrand('epson', 'Epson', ['EB-E01', 'CO-FH02']), taxonomyBrand('viewsonic', 'ViewSonic', ['PA503W', 'PX701'])]),
+      ] },
+      { id: 'audio', name: 'Audio & Music Equipment', icon: 'musical-notes-outline', count: 281, types: [
+        taxonomyType('speakers', 'Speakers', 143, [taxonomyBrand('jbl', 'JBL', ['Charge 5', 'PartyBox 110']), taxonomyBrand('sony', 'Sony', ['SRS-XP500', 'XB23'])]),
+        taxonomyType('headphones', 'Headphones & Earbuds', 138, [taxonomyBrand('airpods', 'Apple', ['AirPods 2', 'AirPods Pro']), taxonomyBrand('oraimo', 'Oraimo', ['FreePods 4', 'Riff 2'])]),
+      ] },
+      { id: 'cameras', name: 'Photo & Video Cameras', icon: 'camera-outline', count: 185, types: [
+        taxonomyType('dslr', 'DSLR & Mirrorless', 86, [taxonomyBrand('canon', 'Canon', ['EOS 90D', 'EOS R50']), taxonomyBrand('nikon', 'Nikon', ['D7500', 'Z50']), taxonomyBrand('sony-camera', 'Sony', ['A6400', 'A7 III'])]),
+        taxonomyType('security-cameras', 'Security Cameras', 99, [taxonomyBrand('hikvision', 'Hikvision', ['ColorVu 2MP', 'Dome 4MP']), taxonomyBrand('dahua', 'Dahua', ['HDCVI 2MP', 'WizSense'])]),
+      ] },
+    ],
+  },
+  auto: {
+    categoryId: 'auto',
+    subcategories: [
+      { id: 'vehicle-parts', name: 'Vehicle Parts & Accessories', icon: 'construct-outline', count: 2174, types: [
+        taxonomyType('engine-parts', 'Engine Parts', 720, [taxonomyBrand('toyota-parts', 'Toyota Genuine', ['Corolla Engine', 'Camry Engine']), taxonomyBrand('bosch', 'Bosch', ['Injector', 'Alternator'])]),
+        taxonomyType('brake-parts', 'Brake System', 410, [taxonomyBrand('brembo', 'Brembo', ['Front Disc', 'Rear Disc']), taxonomyBrand('akebono', 'Akebono', ['Ceramic Pad', 'ProACT Pad'])]),
+        taxonomyType('body-parts', 'Body Parts', 380, [taxonomyBrand('toyota-body', 'Toyota', ['Corolla Bumper', 'Camry Bumper']), taxonomyBrand('honda-body', 'Honda', ['Civic Headlamp', 'Accord Grille'])]),
+      ] },
+      { id: 'cars', name: 'Cars', icon: 'car-outline', count: 1091, types: [
+        taxonomyType('sedan', 'Sedan', 410, [taxonomyBrand('toyota-cars', 'Toyota', ['Corolla', 'Camry', 'Avalon']), taxonomyBrand('honda-cars', 'Honda', ['Civic', 'Accord']), taxonomyBrand('mercedes', 'Mercedes-Benz', ['C-Class', 'E-Class'])]),
+        taxonomyType('suv', 'SUV', 352, [taxonomyBrand('lexus', 'Lexus', ['RX 350', 'GX 460']), taxonomyBrand('toyota-suv', 'Toyota', ['RAV4', 'Highlander', 'Land Cruiser']), taxonomyBrand('kia', 'Kia', ['Sportage', 'Sorento'])]),
+        taxonomyType('pickup', 'Pickup Trucks', 118, [taxonomyBrand('ford', 'Ford', ['Ranger', 'F-150']), taxonomyBrand('hilux', 'Toyota', ['Hilux 2.8', 'Hilux Revo'])]),
+      ] },
+      { id: 'motorcycles', name: 'Motorcycles & Scooters', icon: 'bicycle-outline', count: 380, types: [
+        taxonomyType('motorbikes', 'Motorbikes', 212, [taxonomyBrand('honda-moto', 'Honda', ['CB125', 'Ace 125']), taxonomyBrand('bajaj', 'Bajaj', ['Boxer 100', 'Pulsar 150'])]),
+        taxonomyType('scooters', 'Scooters', 168, [taxonomyBrand('sym', 'SYM', ['Jet 14', 'Orbit']), taxonomyBrand('vespa', 'Vespa', ['Primavera', 'Sprint'])]),
+      ] },
+      { id: 'trucks', name: 'Trucks & Trailers', icon: 'bus-outline', count: 614, types: [
+        taxonomyType('haulage-trucks', 'Haulage Trucks', 268, [taxonomyBrand('sinotruk', 'Sinotruk', ['Howo 371', 'Howo 336']), taxonomyBrand('scania', 'Scania', ['R-Series', 'P-Series'])]),
+        taxonomyType('trailers', 'Trailers', 346, [taxonomyBrand('afriq-trailers', 'AFRIQ Haulage', ['Flatbed', 'Tanker']), taxonomyBrand('schmitz', 'Schmitz', ['Curtainsider', 'Reefer'])]),
+      ] },
+    ],
+  },
+  agriculture: genericTaxonomy('agriculture', ['Grains & Cereals', 'Farm Produce', 'Livestock & Poultry']),
+  beauty: genericTaxonomy('beauty', ['Hair & Wigs', 'Skincare', 'Makeup & Cosmetics']),
+  home: genericTaxonomy('home', ['Furniture', 'Kitchen & Dining', 'Home Decor']),
+  food: genericTaxonomy('food', ['Staples & Grains', 'Drinks & Beverages', 'Spices & Ingredients']),
+  construction: genericTaxonomy('construction', ['Building Materials', 'Tools & Equipment', 'Safety Gear']),
+  fashion: genericTaxonomy('fashion', ['Men’s Fashion', 'Women’s Fashion', 'Shoes & Bags']),
+  health: genericTaxonomy('health', ['Medical Equipment', 'Pharmacy Supplies', 'Wellness Products']),
+  office: genericTaxonomy('office', ['Stationery', 'Office Furniture', 'Printing Supplies']),
+  sports: genericTaxonomy('sports', ['Fitness Equipment', 'Team Sports', 'Outdoor & Recreation']),
+  chemicals: genericTaxonomy('chemicals', ['Industrial Chemicals', 'Cleaning Chemicals', 'Agricultural Chemicals']),
+  machinery: genericTaxonomy('machinery', ['Manufacturing Machinery', 'Agricultural Machinery', 'Industrial Tools']),
+  packaging: genericTaxonomy('packaging', ['Bottles & Containers', 'Bags & Pouches', 'Boxes & Cartons']),
+  toys: genericTaxonomy('toys', ['Educational Toys', 'Baby Care', 'Outdoor Toys']),
+  jewelry: genericTaxonomy('jewelry', ['Gold & Fine Jewelry', 'Fashion Jewelry', 'Watches']),
+  cleaning: genericTaxonomy('cleaning', ['Household Cleaning', 'Janitorial Supplies', 'Laundry Products']),
+  energy: genericTaxonomy('energy', ['Solar Panels', 'Inverters & Batteries', 'Generators']),
+};
+
+export function getCategoryTaxonomy(categoryId: string): CategoryTaxonomy {
+  if (categoryId === 'all') {
+    return {
+      categoryId: 'all',
+      subcategories: CATEGORIES.filter(category => category.id !== 'all').map(category => ({
+        id: category.id,
+        name: category.name,
+        icon: `${category.icon}-outline`,
+        count: category.count,
+        types: [taxonomyType(`${category.id}-catalog`, 'Browse catalog', category.count, [
+          taxonomyBrand(`${category.id}-brand-a`, 'AFRIQ Select', ['Popular models', 'Trade series']),
+          taxonomyBrand(`${category.id}-brand-b`, 'Market Choice', ['Classic', 'Premium']),
+        ])],
+      })),
+    };
+  }
+  return CATEGORY_TAXONOMY[categoryId] ?? genericTaxonomy(categoryId, ['Popular Products', 'Trade Supplies', 'Professional Range']);
+}
+
 // ─── Products ────────────────────────────────────────────────
 export const PRODUCTS: Product[] = [
   {

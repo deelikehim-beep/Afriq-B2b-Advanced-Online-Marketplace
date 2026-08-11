@@ -8,7 +8,11 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
-import { AFRICAN_COUNTRIES, CATEGORIES, PRODUCTS, PRODUCT_COUNTRY, fmt, type Product } from '@/constants/data';
+import {
+  AFRICAN_COUNTRIES, CATEGORIES, PRODUCTS, PRODUCT_COUNTRY, fmt,
+  getCategoryTaxonomy, type CategoryBrand, type CategorySubcategory,
+  type CategoryType, type Product,
+} from '@/constants/data';
 
 const CATEGORY_COLORS: Record<string, string> = {
   textiles: '#7c3aed', electronics: '#0284c7', agriculture: '#16a34a',
@@ -114,6 +118,35 @@ export default function CategoryScreen() {
   const [sort, setSort] = useState<'relevance' | 'price' | 'rating'>('relevance');
   const [filtersVisible, setFiltersVisible] = useState(false);
   const category = CATEGORIES.find(c => c.id === id) ?? CATEGORIES[0];
+  const taxonomy = useMemo(() => getCategoryTaxonomy(id), [id]);
+  const [selectedSubcategoryId, setSelectedSubcategoryId] = useState('');
+  const [selectedTypeId, setSelectedTypeId] = useState('');
+  const [selectedBrandId, setSelectedBrandId] = useState('');
+  const [selectedModelId, setSelectedModelId] = useState('');
+
+  const activeSubcategory: CategorySubcategory | undefined =
+    taxonomy.subcategories.find(item => item.id === selectedSubcategoryId) ?? taxonomy.subcategories[0];
+  const activeType: CategoryType | undefined =
+    activeSubcategory?.types.find(item => item.id === selectedTypeId) ?? activeSubcategory?.types[0];
+  const activeBrand: CategoryBrand | undefined =
+    activeType?.brands.find(item => item.id === selectedBrandId);
+  const activeModel = activeBrand?.models.find(item => item.id === selectedModelId);
+
+  const selectSubcategory = (subcategory: CategorySubcategory) => {
+    setSelectedSubcategoryId(subcategory.id);
+    setSelectedTypeId('');
+    setSelectedBrandId('');
+    setSelectedModelId('');
+  };
+  const selectType = (type: CategoryType) => {
+    setSelectedTypeId(type.id);
+    setSelectedBrandId('');
+    setSelectedModelId('');
+  };
+  const selectBrand = (brand: CategoryBrand) => {
+    setSelectedBrandId(value => value === brand.id ? '' : brand.id);
+    setSelectedModelId('');
+  };
 
   const filtered = useMemo(() => {
     const result = PRODUCTS.filter(p => {
@@ -124,10 +157,15 @@ export default function CategoryScreen() {
       const ratingMatch = p.rating >= rating;
       const stockMatch = !inStock || p.stock > 0;
       const escrowMatch = !escrow || p.escrow;
-      return categoryMatch && textMatch && countryMatch && priceMatch && ratingMatch && stockMatch && escrowMatch;
+      const hierarchyText = `${p.name} ${p.description} ${p.supplier}`.toLowerCase();
+      // Seller catalog records will eventually carry taxonomy IDs. Demo
+      // products still respond to brand/model terms when those are visible.
+      const brandMatch = !activeBrand || hierarchyText.includes(activeBrand.name.toLowerCase()) || hierarchyText.includes('samsung') && activeBrand.name === 'Samsung';
+      const modelMatch = !activeModel || hierarchyText.includes(activeModel.name.toLowerCase().replace(/\s+/g, ' ')) || hierarchyText.includes(activeModel.name.split(' ')[0].toLowerCase());
+      return categoryMatch && textMatch && countryMatch && priceMatch && ratingMatch && stockMatch && escrowMatch && brandMatch && modelMatch;
     });
     return result.sort((a, b) => sort === 'price' ? a.price - b.price : sort === 'rating' ? b.rating - a.rating : Number(b.featured) - Number(a.featured));
-  }, [id, query, country, maxPrice, rating, inStock, escrow, sort]);
+  }, [id, query, country, maxPrice, rating, inStock, escrow, sort, activeBrand, activeModel]);
 
   const reset = () => { setCountry('all'); setMaxPrice(''); setRating(0); setInStock(false); setEscrow(false); };
 
@@ -153,6 +191,116 @@ export default function CategoryScreen() {
           <Text style={styles.filterBtnTxt}>Filters</Text>
         </TouchableOpacity>
       </View>
+
+      {/* Jiji-inspired, always-visible catalog hierarchy */}
+      <View style={[styles.catalogExplorer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <View style={styles.explorerTitleRow}>
+          <View>
+            <Text style={[styles.explorerEyebrow, { color: colors.brand }]}>Browse by catalog</Text>
+            <Text style={[styles.explorerTitle, { color: colors.foreground }]}>Subcategories</Text>
+          </View>
+          <View style={[styles.depthBadge, { backgroundColor: colors.brandBg }]}>
+            <Ionicons name="git-branch-outline" size={12} color={colors.brand} />
+            <Text style={[styles.depthBadgeText, { color: colors.brand }]}>Category → type → brand → model</Text>
+          </View>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subcategoryRow}>
+          {taxonomy.subcategories.map(subcategory => {
+            const active = activeSubcategory?.id === subcategory.id;
+            return (
+              <TouchableOpacity
+                key={subcategory.id}
+                onPress={() => selectSubcategory(subcategory)}
+                style={[styles.subcategoryCard, { backgroundColor: active ? colors.brandBg : colors.background, borderColor: active ? colors.brand : colors.border }]}
+              >
+                <View style={[styles.subcategoryIcon, { backgroundColor: active ? colors.brand : colors.card }]}>
+                  <Ionicons name={subcategory.icon as any} size={18} color={active ? '#ffffff' : colors.brand} />
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text numberOfLines={1} style={[styles.subcategoryName, { color: colors.foreground }]}>{subcategory.name}</Text>
+                  <Text style={[styles.subcategoryCount, { color: colors.mutedForeground }]}>{subcategory.count.toLocaleString()} listings</Text>
+                </View>
+                <Ionicons name="chevron-forward" size={14} color={active ? colors.brand : colors.mutedForeground} />
+              </TouchableOpacity>
+            );
+          })}
+        </ScrollView>
+
+        {activeSubcategory && (
+          <View style={[styles.typePanel, { backgroundColor: colors.background, borderColor: colors.border }]}>
+            <View style={styles.typePanelHeader}>
+              <View>
+                <Text style={[styles.typePanelEyebrow, { color: colors.mutedForeground }]}>{category.name} / {activeSubcategory.name}</Text>
+                <Text style={[styles.typePanelTitle, { color: colors.foreground }]}>Choose a type</Text>
+              </View>
+              <Text style={[styles.typePanelHint, { color: colors.brand }]}>{activeSubcategory.types.length} types</Text>
+            </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.typeRow}>
+              {activeSubcategory.types.map(type => {
+                const active = activeType?.id === type.id;
+                return (
+                  <TouchableOpacity key={type.id} onPress={() => selectType(type)} style={[styles.typeChip, { backgroundColor: active ? colors.brand : colors.card, borderColor: active ? colors.brand : colors.border }]}>
+                    <Text style={[styles.typeChipName, { color: active ? '#ffffff' : colors.foreground }]}>{type.name}</Text>
+                    <Text style={[styles.typeChipCount, { color: active ? 'rgba(255,255,255,0.72)' : colors.mutedForeground }]}>{type.count.toLocaleString()}</Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
+          </View>
+        )}
+      </View>
+
+      {activeType && (
+        <View style={[styles.brandStrip, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+          <View style={styles.brandStripHeader}>
+            <View>
+              <Text style={[styles.brandEyebrow, { color: colors.brand }]}>Type: {activeType.name}</Text>
+              <Text style={[styles.brandTitle, { color: colors.foreground }]}>Brands & models</Text>
+            </View>
+            {(activeBrand || activeModel) && (
+              <TouchableOpacity onPress={() => { setSelectedBrandId(''); setSelectedModelId(''); }}>
+                <Text style={[styles.clearSelection, { color: colors.brand }]}>Clear</Text>
+              </TouchableOpacity>
+            )}
+          </View>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.brandRow}>
+            {activeType.brands.map(brand => {
+              const brandActive = activeBrand?.id === brand.id;
+              return (
+                <View key={brand.id} style={[styles.brandGroup, { borderColor: brandActive ? colors.brand : colors.border, backgroundColor: brandActive ? colors.brandBg : colors.background }]}>
+                  <TouchableOpacity onPress={() => selectBrand(brand)} style={styles.brandButton}>
+                    <View style={[styles.brandLogo, { backgroundColor: brandActive ? colors.brand : colors.card }]}>
+                      <Text style={[styles.brandLogoText, { color: brandActive ? '#ffffff' : colors.brand }]}>{brand.name.slice(0, 1)}</Text>
+                    </View>
+                    <View style={{ flex: 1 }}>
+                      <Text numberOfLines={1} style={[styles.brandName, { color: colors.foreground }]}>{brand.name}</Text>
+                      <Text style={[styles.brandModelsCount, { color: colors.mutedForeground }]}>{brand.models.length} models</Text>
+                    </View>
+                    <Ionicons name={brandActive ? 'chevron-up' : 'chevron-down'} size={14} color={colors.mutedForeground} />
+                  </TouchableOpacity>
+                  {brandActive && (
+                    <View style={[styles.modelList, { borderTopColor: colors.border }]}>
+                      {brand.models.map(model => (
+                        <TouchableOpacity key={model.id} onPress={() => setSelectedModelId(value => value === model.id ? '' : model.id)} style={[styles.modelChip, { backgroundColor: selectedModelId === model.id ? colors.brand : colors.card, borderColor: selectedModelId === model.id ? colors.brand : colors.border }]}>
+                          <Text style={[styles.modelText, { color: selectedModelId === model.id ? '#ffffff' : colors.foreground }]}>{model.name}</Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })}
+          </ScrollView>
+          {(activeBrand || activeModel) && (
+            <View style={[styles.pathBar, { backgroundColor: colors.navyBg }]}>
+              <Ionicons name="navigate-outline" size={14} color={colors.navy} />
+              <Text numberOfLines={1} style={[styles.pathText, { color: colors.foreground }]}>
+                {category.name} / {activeSubcategory?.name} / {activeType.name} / {activeBrand?.name ?? 'All brands'}{activeModel ? ` / ${activeModel.name}` : ''}
+              </Text>
+            </View>
+          )}
+        </View>
+      )}
 
       <View style={styles.sortRow}>
         <Text style={[styles.resultTxt, { color: colors.mutedForeground }]}>Showing the best matches</Text>
@@ -197,6 +345,43 @@ const styles = StyleSheet.create({
   searchInput: { flex: 1, fontSize: 13, fontFamily: 'Inter_400Regular' },
   filterBtn: { height: 44, borderRadius: 12, paddingHorizontal: 13, flexDirection: 'row', alignItems: 'center', gap: 5 },
   filterBtnTxt: { color: '#ffffff', fontSize: 12, fontFamily: 'Inter_700Bold' },
+  catalogExplorer: { paddingTop: 13, paddingBottom: 11, borderBottomWidth: 1 },
+  explorerTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 9 },
+  explorerEyebrow: { fontSize: 9, letterSpacing: 0.6, textTransform: 'uppercase', fontFamily: 'Inter_700Bold' },
+  explorerTitle: { fontSize: 16, fontFamily: 'Inter_700Bold', marginTop: 2 },
+  depthBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 6, borderRadius: 9, maxWidth: 155 },
+  depthBadgeText: { fontSize: 8, lineHeight: 11, fontFamily: 'Inter_600SemiBold' },
+  subcategoryRow: { gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
+  subcategoryCard: { width: 192, minHeight: 62, borderRadius: 12, borderWidth: 1, padding: 8, flexDirection: 'row', alignItems: 'center', gap: 8 },
+  subcategoryIcon: { width: 38, height: 38, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
+  subcategoryName: { fontSize: 11, fontFamily: 'Inter_700Bold' },
+  subcategoryCount: { fontSize: 9, marginTop: 3, fontFamily: 'Inter_400Regular' },
+  typePanel: { marginHorizontal: 16, borderRadius: 13, borderWidth: 1, padding: 10 },
+  typePanelHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 },
+  typePanelEyebrow: { fontSize: 9, fontFamily: 'Inter_400Regular' },
+  typePanelTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', marginTop: 2 },
+  typePanelHint: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  typeRow: { gap: 7 },
+  typeChip: { minWidth: 105, paddingHorizontal: 10, paddingVertical: 9, borderRadius: 10, borderWidth: 1 },
+  typeChipName: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  typeChipCount: { fontSize: 9, marginTop: 3, fontFamily: 'Inter_400Regular' },
+  brandStrip: { paddingTop: 11, paddingBottom: 10, borderBottomWidth: 1 },
+  brandStripHeader: { flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: 8 },
+  brandEyebrow: { fontSize: 9, fontFamily: 'Inter_600SemiBold' },
+  brandTitle: { fontSize: 15, fontFamily: 'Inter_700Bold', marginTop: 2 },
+  clearSelection: { fontSize: 11, fontFamily: 'Inter_600SemiBold' },
+  brandRow: { gap: 8, paddingHorizontal: 16 },
+  brandGroup: { width: 174, borderRadius: 11, borderWidth: 1, overflow: 'hidden' },
+  brandButton: { minHeight: 54, flexDirection: 'row', alignItems: 'center', gap: 7, padding: 8 },
+  brandLogo: { width: 30, height: 30, borderRadius: 9, alignItems: 'center', justifyContent: 'center' },
+  brandLogoText: { fontSize: 14, fontFamily: 'Inter_700Bold' },
+  brandName: { fontSize: 11, fontFamily: 'Inter_700Bold' },
+  brandModelsCount: { fontSize: 9, marginTop: 2, fontFamily: 'Inter_400Regular' },
+  modelList: { borderTopWidth: 1, padding: 7, gap: 5 },
+  modelChip: { borderRadius: 7, borderWidth: 1, paddingHorizontal: 8, paddingVertical: 6 },
+  modelText: { fontSize: 9, fontFamily: 'Inter_500Medium' },
+  pathBar: { flexDirection: 'row', alignItems: 'center', gap: 6, marginHorizontal: 16, marginTop: 10, paddingHorizontal: 9, paddingVertical: 8, borderRadius: 9 },
+  pathText: { flex: 1, fontSize: 10, fontFamily: 'Inter_500Medium' },
   sortRow: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 10, gap: 8 },
   resultTxt: { fontSize: 11, fontFamily: 'Inter_400Regular' },
   sortOptions: { gap: 6 },
