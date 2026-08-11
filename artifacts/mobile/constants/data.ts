@@ -441,6 +441,38 @@ const genericTaxonomy = (categoryId: string, labels: string[]): CategoryTaxonomy
   })),
 });
 
+type TaxonomySpec = {
+  name: string;
+  icon: string;
+  types: {
+    name: string;
+    brands: { name: string; models: string[] }[];
+  }[];
+}[];
+
+const curatedTaxonomy = (categoryId: string, specs: TaxonomySpec): CategoryTaxonomy => ({
+  categoryId,
+  subcategories: specs.map((subcategory, subcategoryIndex) => ({
+    id: `${categoryId}-${subcategoryIndex + 1}`,
+    name: subcategory.name,
+    icon: subcategory.icon,
+    count: subcategory.types.reduce((sum, type) => sum + type.brands.reduce((brandSum, brand) => brandSum + brand.models.length * 24, 0), 0),
+    types: subcategory.types.map((type, typeIndex) => ({
+      id: `${categoryId}-${subcategoryIndex + 1}-${typeIndex + 1}`,
+      name: type.name,
+      count: type.brands.reduce((sum, brand) => sum + brand.models.length * 24, 0),
+      brands: type.brands.map((brand, brandIndex) => ({
+        id: `${categoryId}-${subcategoryIndex + 1}-${typeIndex + 1}-brand-${brandIndex + 1}`,
+        name: brand.name,
+        models: brand.models.map((model, modelIndex) => ({
+          id: `${categoryId}-${subcategoryIndex + 1}-${typeIndex + 1}-${brandIndex + 1}-${modelIndex + 1}`,
+          name: model,
+        })),
+      })),
+    })),
+  })),
+});
+
 export const CATEGORY_TAXONOMY: Record<string, CategoryTaxonomy> = {
   textiles: {
     categoryId: 'textiles',
@@ -526,22 +558,230 @@ export const CATEGORY_TAXONOMY: Record<string, CategoryTaxonomy> = {
       ] },
     ],
   },
-  agriculture: genericTaxonomy('agriculture', ['Grains & Cereals', 'Farm Produce', 'Livestock & Poultry']),
-  beauty: genericTaxonomy('beauty', ['Hair & Wigs', 'Skincare', 'Makeup & Cosmetics']),
-  home: genericTaxonomy('home', ['Furniture', 'Kitchen & Dining', 'Home Decor']),
-  food: genericTaxonomy('food', ['Staples & Grains', 'Drinks & Beverages', 'Spices & Ingredients']),
-  construction: genericTaxonomy('construction', ['Building Materials', 'Tools & Equipment', 'Safety Gear']),
-  fashion: genericTaxonomy('fashion', ['Men’s Fashion', 'Women’s Fashion', 'Shoes & Bags']),
-  health: genericTaxonomy('health', ['Medical Equipment', 'Pharmacy Supplies', 'Wellness Products']),
-  office: genericTaxonomy('office', ['Stationery', 'Office Furniture', 'Printing Supplies']),
-  sports: genericTaxonomy('sports', ['Fitness Equipment', 'Team Sports', 'Outdoor & Recreation']),
-  chemicals: genericTaxonomy('chemicals', ['Industrial Chemicals', 'Cleaning Chemicals', 'Agricultural Chemicals']),
-  machinery: genericTaxonomy('machinery', ['Manufacturing Machinery', 'Agricultural Machinery', 'Industrial Tools']),
-  packaging: genericTaxonomy('packaging', ['Bottles & Containers', 'Bags & Pouches', 'Boxes & Cartons']),
-  toys: genericTaxonomy('toys', ['Educational Toys', 'Baby Care', 'Outdoor Toys']),
-  jewelry: genericTaxonomy('jewelry', ['Gold & Fine Jewelry', 'Fashion Jewelry', 'Watches']),
-  cleaning: genericTaxonomy('cleaning', ['Household Cleaning', 'Janitorial Supplies', 'Laundry Products']),
-  energy: genericTaxonomy('energy', ['Solar Panels', 'Inverters & Batteries', 'Generators']),
+  agriculture: curatedTaxonomy('agriculture', [
+    { name: 'Grains & Cereals', icon: 'leaf-outline', types: [
+      { name: 'Rice', brands: [{ name: 'Kebbi Farms', models: ['Long Grain 50kg', 'Premium Parboiled', 'Organic Brown Rice'] }, { name: 'Olam', models: ['Mama Gold', 'Royal Stallion'] }] },
+      { name: 'Maize & Corn', brands: [{ name: 'North Harvest', models: ['Yellow Maize', 'White Maize'] }, { name: 'FarmCo', models: ['Corn Flour', 'Popcorn Grade'] }] },
+    ] },
+    { name: 'Farm Produce', icon: 'nutrition-outline', types: [
+      { name: 'Vegetables', brands: [{ name: 'Green Basket', models: ['Fresh Pepper', 'Tomatoes', 'Onions'] }, { name: 'Jos Fresh', models: ['Cabbage', 'Carrot'] }] },
+      { name: 'Tubers & Roots', brands: [{ name: 'Kano Agro', models: ['Yam Tubers', 'Cassava'] }, { name: 'Harvest Link', models: ['Sweet Potato', 'Ginger'] }] },
+    ] },
+    { name: 'Livestock & Poultry', icon: 'paw-outline', types: [
+      { name: 'Poultry', brands: [{ name: 'Farm Fresh', models: ['Broilers', 'Layers', 'Day-Old Chicks'] }, { name: 'Apex Feeds', models: ['Starter Chicks', 'Point of Lay'] }] },
+      { name: 'Animal Feed', brands: [{ name: 'TopFeed', models: ['Grower Mash', 'Finisher Mash'] }, { name: 'Coppens', models: ['Fish Feed 2mm', 'Fish Feed 4mm'] }] },
+    ] },
+  ]),
+  beauty: curatedTaxonomy('beauty', [
+    { name: 'Hair & Wigs', icon: 'cut-outline', types: [
+      { name: 'Human Hair Bundles', brands: [{ name: 'Lekki Beauty', models: ['Brazilian Body Wave', 'Peruvian Straight', 'Raw Burmese'] }, { name: 'Royal Hair', models: ['HD Lace', 'Transparent Lace'] }] },
+      { name: 'Wigs', brands: [{ name: 'Luxe Crown', models: ['Bob Wig', 'Frontal Wig', 'Glueless Wig'] }, { name: 'Beauty Hub', models: ['Pixie Cut', 'Water Wave'] }] },
+    ] },
+    { name: 'Skincare', icon: 'sparkles-outline', types: [
+      { name: 'Face Care', brands: [{ name: 'CeraVe', models: ['Foaming Cleanser', 'Moisturising Cream'] }, { name: 'The Ordinary', models: ['Niacinamide', 'Hyaluronic Acid'] }] },
+      { name: 'Body Care', brands: [{ name: 'Nivea', models: ['Radiant Lotion', 'Cocoa Butter'] }, { name: 'Vaseline', models: ['Cocoa Radiant', 'Intensive Care'] }] },
+    ] },
+    { name: 'Makeup & Cosmetics', icon: 'color-palette-outline', types: [
+      { name: 'Makeup', brands: [{ name: 'Maybelline', models: ['Fit Me Foundation', 'SuperStay Matte'] }, { name: 'MAC', models: ['Studio Fix', 'Ruby Woo'] }] },
+      { name: 'Fragrance', brands: [{ name: 'Lattafa', models: ['Khamrah', 'Yara'] }, { name: 'Jovan', models: ['Musk Oil', 'White Musk'] }] },
+    ] },
+  ]),
+  home: curatedTaxonomy('home', [
+    { name: 'Furniture', icon: 'bed-outline', types: [
+      { name: 'Living Room', brands: [{ name: 'Home Luxe', models: ['L-Shaped Sofa', '3-Seater Sofa', 'Accent Chair'] }, { name: 'IKEA Trade', models: ['KALLAX Shelf', 'POÄNG Chair'] }] },
+      { name: 'Bedroom', brands: [{ name: 'SleepWell', models: ['5ft Bed Frame', 'King Bed Frame'] }, { name: 'Royal Furniture', models: ['Wardrobe', 'Dresser'] }] },
+    ] },
+    { name: 'Kitchen & Dining', icon: 'restaurant-outline', types: [
+      { name: 'Kitchen Appliances', brands: [{ name: 'Binatone', models: ['Blender 1.5L', 'Air Fryer 5L'] }, { name: 'Scanfrost', models: ['Gas Cooker', 'Microwave'] }] },
+      { name: 'Tableware', brands: [{ name: 'Duralex', models: ['Glass Set', 'Dinner Set'] }, { name: 'Royal Table', models: ['Ceramic Set', 'Cutlery Set'] }] },
+    ] },
+    { name: 'Home Decor', icon: 'color-palette-outline', types: [
+      { name: 'Lighting', brands: [{ name: 'Philips', models: ['LED Bulb 12W', 'Downlight'] }, { name: 'Luma', models: ['Pendant Light', 'Wall Sconce'] }] },
+      { name: 'Rugs & Curtains', brands: [{ name: 'Royal Drape', models: ['Blackout Curtain', 'Sheer Curtain'] }, { name: 'Persian House', models: ['Area Rug', 'Runner Rug'] }] },
+    ] },
+  ]),
+  food: curatedTaxonomy('food', [
+    { name: 'Staples & Grains', icon: 'basket-outline', types: [
+      { name: 'Rice', brands: [{ name: 'Kebbi Farms', models: ['Long Grain 50kg', 'Parboiled 25kg'] }, { name: 'Royal Stallion', models: ['Premium Rice', 'Classic Rice'] }] },
+      { name: 'Flour & Semolina', brands: [{ name: 'Golden Penny', models: ['Wheat Flour 50kg', 'Semolina 10kg'] }, { name: 'Honeywell', models: ['Bread Flour', 'Pasta Flour'] }] },
+    ] },
+    { name: 'Drinks & Beverages', icon: 'wine-outline', types: [
+      { name: 'Soft Drinks', brands: [{ name: 'Coca-Cola', models: ['Coke 50cl', 'Fanta 50cl'] }, { name: 'Pepsi', models: ['Pepsi 50cl', '7Up 50cl'] }] },
+      { name: 'Water & Juice', brands: [{ name: 'Eva', models: ['Table Water', 'Flavoured Water'] }, { name: 'Chivita', models: ['100% Juice', 'Active Juice'] }] },
+    ] },
+    { name: 'Spices & Ingredients', icon: 'flask-outline', types: [
+      { name: 'Cooking Oils', brands: [{ name: 'Devon Kings', models: ['Vegetable Oil 5L', 'Palm Oil 5L'] }, { name: 'Power Oil', models: ['Classic Oil', 'Canola Oil'] }] },
+      { name: 'Seasonings', brands: [{ name: 'Knorr', models: ['Chicken Cube', 'Beef Cube'] }, { name: 'Maggi', models: ['Star Cube', 'Chicken Cube'] }] },
+    ] },
+  ]),
+  construction: curatedTaxonomy('construction', [
+    { name: 'Building Materials', icon: 'construct-outline', types: [
+      { name: 'Cement', brands: [{ name: 'Dangote', models: ['3X Cement 50kg', 'BlocMaster'] }, { name: 'BUA', models: ['BUA Cement 50kg', 'Power Cement'] }] },
+      { name: 'Steel & Roofing', brands: [{ name: 'African Steel', models: ['Iron Rod 12mm', 'Iron Rod 16mm'] }, { name: 'Tower Aluminium', models: ['Longspan 0.45mm', 'Stone Coated'] }] },
+    ] },
+    { name: 'Tools & Equipment', icon: 'hammer-outline', types: [
+      { name: 'Power Tools', brands: [{ name: 'Bosch', models: ['GSH 500 Hammer', 'GWS Grinder'] }, { name: 'Makita', models: ['Cordless Drill', 'Angle Grinder'] }] },
+      { name: 'Hand Tools', brands: [{ name: 'Stanley', models: ['Tool Set', 'Tape Measure'] }, { name: 'Ingco', models: ['Spanner Set', 'Claw Hammer'] }] },
+    ] },
+    { name: 'Safety Gear', icon: 'shield-checkmark-outline', types: [
+      { name: 'Protective Wear', brands: [{ name: '3M', models: ['Safety Helmet', 'Reflective Vest'] }, { name: 'ProSafe', models: ['Work Boots', 'Coverall'] }] },
+      { name: 'Site Safety', brands: [{ name: 'SiteGuard', models: ['Safety Cone', 'Barrier Tape'] }, { name: 'Honeywell', models: ['Ear Protection', 'Goggles'] }] },
+    ] },
+  ]),
+  fashion: curatedTaxonomy('fashion', [
+    { name: 'Men’s Fashion', icon: 'shirt-outline', types: [
+      { name: 'Traditional Wear', brands: [{ name: 'Aso Oke House', models: ['Agbada Set', 'Senator Wear'] }, { name: 'Kente House', models: ['Kente Two-Piece', 'Stole'] }] },
+      { name: 'Casual Wear', brands: [{ name: 'AFRIQ Basics', models: ['Polo Shirt', 'Cargo Trousers'] }, { name: 'Urban Trade', models: ['Hoodie', 'Denim Jacket'] }] },
+    ] },
+    { name: 'Women’s Fashion', icon: 'woman-outline', types: [
+      { name: 'Dresses', brands: [{ name: 'Lagos Label', models: ['Maxi Dress', 'Midi Dress'] }, { name: 'Zara Trade', models: ['Work Dress', 'Party Dress'] }] },
+      { name: 'Two-Piece Sets', brands: [{ name: 'Style House', models: ['Linen Set', 'Knit Set'] }, { name: 'Nairobi Fashion', models: ['Co-ord Set', 'Skirt Set'] }] },
+    ] },
+    { name: 'Shoes & Bags', icon: 'bag-handle-outline', types: [
+      { name: 'Footwear', brands: [{ name: 'Nike', models: ['Air Force 1', 'Air Max'] }, { name: 'Adidas', models: ['Samba', 'Ultraboost'] }] },
+      { name: 'Bags', brands: [{ name: 'Michael Kors', models: ['Tote Bag', 'Crossbody'] }, { name: 'Leather Works', models: ['Laptop Bag', 'Travel Bag'] }] },
+    ] },
+  ]),
+  health: curatedTaxonomy('health', [
+    { name: 'Medical Equipment', icon: 'medkit-outline', types: [
+      { name: 'Diagnostic Equipment', brands: [{ name: 'Omron', models: ['Blood Pressure Monitor', 'Thermometer'] }, { name: 'Mindray', models: ['Patient Monitor', 'Ultrasound'] }] },
+      { name: 'Hospital Furniture', brands: [{ name: 'MedCare', models: ['Hospital Bed', 'Examination Couch'] }, { name: 'Steris', models: ['Instrument Trolley', 'Mayo Stand'] }] },
+    ] },
+    { name: 'Pharmacy Supplies', icon: 'flask-outline', types: [
+      { name: 'Dispensary', brands: [{ name: 'AFRIQ Medical', models: ['Pill Bottle Pack', 'Syringe Pack'] }, { name: 'BD', models: ['Safety Syringe', 'Needle Pack'] }] },
+      { name: 'Consumables', brands: [{ name: 'Nipro', models: ['IV Set', 'Blood Set'] }, { name: 'Medline', models: ['Gloves Box', 'Face Mask Box'] }] },
+    ] },
+    { name: 'Wellness Products', icon: 'heart-outline', types: [
+      { name: 'Vitamins', brands: [{ name: 'Centrum', models: ['Women Multivitamin', 'Adults Multivitamin'] }, { name: 'Wellman', models: ['Original', 'Sport'] }] },
+      { name: 'Fitness Recovery', brands: [{ name: 'TheraBand', models: ['Resistance Band', 'Recovery Kit'] }, { name: 'Wellness Hub', models: ['Massage Gun', 'Foam Roller'] }] },
+    ] },
+  ]),
+  office: curatedTaxonomy('office', [
+    { name: 'Stationery', icon: 'pencil-outline', types: [
+      { name: 'Writing Supplies', brands: [{ name: 'BIC', models: ['Cristal Pen Box', 'Round Stic Box'] }, { name: 'Stabilo', models: ['Boss Highlighter', 'Point Pen'] }] },
+      { name: 'Paper Products', brands: [{ name: 'PaperOne', models: ['A4 Ream', 'A3 Ream'] }, { name: 'Double A', models: ['Premium A4', 'Colour Paper'] }] },
+    ] },
+    { name: 'Office Furniture', icon: 'briefcase-outline', types: [
+      { name: 'Desks & Tables', brands: [{ name: 'WorkSpace', models: ['Executive Desk', 'Workstation'] }, { name: 'IKEA Trade', models: ['Linnmon Desk', 'Meeting Table'] }] },
+      { name: 'Chairs', brands: [{ name: 'ErgoPro', models: ['Ergonomic Chair', 'Mesh Chair'] }, { name: 'Office Hub', models: ['Visitor Chair', 'Executive Chair'] }] },
+    ] },
+    { name: 'Printing Supplies', icon: 'print-outline', types: [
+      { name: 'Printers', brands: [{ name: 'HP', models: ['LaserJet Pro', 'DeskJet 2710'] }, { name: 'Canon', models: ['Pixma G3420', 'i-SENSYS'] }] },
+      { name: 'Ink & Toner', brands: [{ name: 'HP Original', models: ['LaserJet 107A', 'DeskJet 305'] }, { name: 'Epson', models: ['003 Ink', '664 Ink'] }] },
+    ] },
+  ]),
+  sports: curatedTaxonomy('sports', [
+    { name: 'Fitness Equipment', icon: 'barbell-outline', types: [
+      { name: 'Strength Training', brands: [{ name: 'Lagos Fitness', models: ['Dumbbell Set', 'Olympic Barbell'] }, { name: 'Decathlon', models: ['Kettlebell', 'Weight Plates'] }] },
+      { name: 'Cardio Equipment', brands: [{ name: 'ProForm', models: ['Treadmill', 'Exercise Bike'] }, { name: 'FitLine', models: ['Elliptical', 'Rowing Machine'] }] },
+    ] },
+    { name: 'Team Sports', icon: 'football-outline', types: [
+      { name: 'Football', brands: [{ name: 'Nike', models: ['Academy Ball', 'Flight Ball'] }, { name: 'Adidas', models: ['Al Rihla', 'UCL Ball'] }] },
+      { name: 'Basketball', brands: [{ name: 'Spalding', models: ['TF-500', 'Excel Ball'] }, { name: 'Molten', models: ['BG4500', 'B7G3800'] }] },
+    ] },
+    { name: 'Outdoor & Recreation', icon: 'bicycle-outline', types: [
+      { name: 'Cycling', brands: [{ name: 'Giant', models: ['Escape 3', 'Talon 2'] }, { name: 'Trek', models: ['Marlin 5', 'FX 2'] }] },
+      { name: 'Camping', brands: [{ name: 'Coleman', models: ['4-Person Tent', 'Cooler Box'] }, { name: 'NatureHike', models: ['Cloud Up Tent', 'Sleeping Bag'] }] },
+    ] },
+  ]),
+  chemicals: curatedTaxonomy('chemicals', [
+    { name: 'Industrial Chemicals', icon: 'flask-outline', types: [
+      { name: 'Solvents', brands: [{ name: 'ChemTrade', models: ['Acetone 25L', 'Ethanol 25L'] }, { name: 'BASF', models: ['Industrial Solvent', 'Thinner'] }] },
+      { name: 'Acids & Alkalis', brands: [{ name: 'AfricaChem', models: ['Caustic Soda', 'Sulphuric Acid'] }, { name: 'Nouryon', models: ['Hydrochloric Acid', 'Sodium Hydroxide'] }] },
+    ] },
+    { name: 'Cleaning Chemicals', icon: 'water-outline', types: [
+      { name: 'Disinfectants', brands: [{ name: 'Dettol', models: ['Antiseptic 1L', 'Disinfectant 5L'] }, { name: 'Hypo', models: ['Bleach 5L', 'Bleach 25L'] }] },
+      { name: 'Detergents', brands: [{ name: 'Omo', models: ['Powder 25kg', 'Liquid 5L'] }, { name: 'Ariel', models: ['Powder 25kg', 'Professional Liquid'] }] },
+    ] },
+    { name: 'Agricultural Chemicals', icon: 'leaf-outline', types: [
+      { name: 'Fertilizer', brands: [{ name: 'Notore', models: ['Urea 50kg', 'NPK 15-15-15'] }, { name: 'Indorama', models: ['Urea Premium', 'NPK Blend'] }] },
+      { name: 'Crop Protection', brands: [{ name: 'Syngenta', models: ['Herbicide 1L', 'Fungicide 1L'] }, { name: 'ADAMA', models: ['Insecticide 1L', 'Weed Control'] }] },
+    ] },
+  ]),
+  machinery: curatedTaxonomy('machinery', [
+    { name: 'Manufacturing Machinery', icon: 'cog-outline', types: [
+      { name: 'Processing Machines', brands: [{ name: 'Nigerian Machine Tools', models: ['Lathe Machine', 'Milling Machine'] }, { name: 'Caterpillar', models: ['Industrial Loader', 'Compressor'] }] },
+      { name: 'Packaging Machines', brands: [{ name: 'AFRIQ Industrial', models: ['Sealing Machine', 'Filling Machine'] }, { name: 'Bosch Rexroth', models: ['Conveyor', 'Labeler'] }] },
+    ] },
+    { name: 'Agricultural Machinery', icon: 'leaf-outline', types: [
+      { name: 'Tractors', brands: [{ name: 'John Deere', models: ['5075E', '5050D'] }, { name: 'Massey Ferguson', models: ['MF 385', 'MF 290'] }] },
+      { name: 'Harvesting', brands: [{ name: 'New Holland', models: ['Combine Harvester', 'Baler'] }, { name: 'Kubota', models: ['Reaper', 'Rice Transplanter'] }] },
+    ] },
+    { name: 'Industrial Tools', icon: 'hammer-outline', types: [
+      { name: 'Compressors', brands: [{ name: 'Atlas Copco', models: ['GA 15', 'G7 Compressor'] }, { name: 'Ingersoll Rand', models: ['UP6', 'Air Receiver'] }] },
+      { name: 'Welding Equipment', brands: [{ name: 'Lincoln Electric', models: ['Inverter 200A', 'MIG Welder'] }, { name: 'Miller', models: ['Thunderbolt', 'Millermatic'] }] },
+    ] },
+  ]),
+  packaging: curatedTaxonomy('packaging', [
+    { name: 'Bottles & Containers', icon: 'flask-outline', types: [
+      { name: 'Plastic Bottles', brands: [{ name: 'PackRight', models: ['500ml PET', '1L PET', '5L Jerrycan'] }, { name: 'Nampak', models: ['HDPE Bottle', 'Trigger Bottle'] }] },
+      { name: 'Glass Containers', brands: [{ name: 'GlassWorks', models: ['250ml Jar', '500ml Bottle'] }, { name: 'Frigoglass', models: ['Food Jar', 'Sauce Bottle'] }] },
+    ] },
+    { name: 'Bags & Pouches', icon: 'bag-outline', types: [
+      { name: 'Nylon & Poly Bags', brands: [{ name: 'Yaba Packaging', models: ['HDPE 100 Micron', 'Carrier Bag'] }, { name: 'FlexPack', models: ['Flat Bag', 'Courier Bag'] }] },
+      { name: 'Stand-Up Pouches', brands: [{ name: 'PackFlex', models: ['Zip Pouch', 'Spout Pouch'] }, { name: 'Pouch House', models: ['Kraft Pouch', 'Foil Pouch'] }] },
+    ] },
+    { name: 'Boxes & Cartons', icon: 'cube-outline', types: [
+      { name: 'Corrugated Boxes', brands: [{ name: 'Carton Hub', models: ['3-Ply Carton', '5-Ply Carton'] }, { name: 'WestPack', models: ['Mailer Box', 'Shipping Box'] }] },
+      { name: 'Retail Packaging', brands: [{ name: 'PrintPack', models: ['Printed Box', 'Folding Carton'] }, { name: 'BoxCraft', models: ['Gift Box', 'Display Box'] }] },
+    ] },
+  ]),
+  toys: curatedTaxonomy('toys', [
+    { name: 'Educational Toys', icon: 'school-outline', types: [
+      { name: 'Learning Sets', brands: [{ name: 'Fisher-Price', models: ['Activity Cube', 'Shape Sorter'] }, { name: 'LEGO', models: ['Classic Bricks', 'Duplo Set'] }] },
+      { name: 'Books & Puzzles', brands: [{ name: 'Scholastic', models: ['Story Set', 'Activity Book'] }, { name: 'Melissa & Doug', models: ['Wooden Puzzle', 'Learning Board'] }] },
+    ] },
+    { name: 'Baby Care', icon: 'happy-outline', types: [
+      { name: 'Baby Feeding', brands: [{ name: 'NAN', models: ['Comfort 1', 'Optipro 2'] }, { name: 'Aptamil', models: ['First Infant', 'Follow On'] }] },
+      { name: 'Baby Accessories', brands: [{ name: 'Tommee Tippee', models: ['Feeding Bottle', 'Sterilizer'] }, { name: 'Philips Avent', models: ['Natural Bottle', 'Bottle Warmer'] }] },
+    ] },
+    { name: 'Outdoor Toys', icon: 'football-outline', types: [
+      { name: 'Ride-On Toys', brands: [{ name: 'Kids Ride', models: ['Electric Car', 'Balance Bike'] }, { name: 'Razor', models: ['Kick Scooter', 'Electric Scooter'] }] },
+      { name: 'Games', brands: [{ name: 'Hasbro', models: ['Monopoly', 'Connect 4'] }, { name: 'Mattel', models: ['UNO', 'Barbie Set'] }] },
+    ] },
+  ]),
+  jewelry: curatedTaxonomy('jewelry', [
+    { name: 'Gold & Fine Jewelry', icon: 'diamond-outline', types: [
+      { name: 'Necklaces & Chains', brands: [{ name: 'Gold House', models: ['18K Chain', 'Pendant Necklace'] }, { name: 'Cartier Trade', models: ['Love Chain', 'Trinity Pendant'] }] },
+      { name: 'Rings & Bracelets', brands: [{ name: 'Royal Gold', models: ['Signet Ring', 'Bangle'] }, { name: 'Tiffany Trade', models: ['Band Ring', 'Link Bracelet'] }] },
+    ] },
+    { name: 'Fashion Jewelry', icon: 'sparkles-outline', types: [
+      { name: 'Costume Jewelry', brands: [{ name: 'Lagos Beads', models: ['Beaded Necklace', 'Statement Set'] }, { name: 'Style Jewelry', models: ['Hoop Earrings', 'Layered Set'] }] },
+      { name: 'Bridal Jewelry', brands: [{ name: 'Bridal Luxe', models: ['Tiara', 'Crystal Set'] }, { name: 'Pearl House', models: ['Pearl Strand', 'Bridal Drop'] }] },
+    ] },
+    { name: 'Watches', icon: 'watch-outline', types: [
+      { name: 'Smart Watches', brands: [{ name: 'Apple', models: ['Watch Series 9', 'Watch SE'] }, { name: 'Samsung', models: ['Galaxy Watch 6', 'Galaxy Watch 5'] }] },
+      { name: 'Classic Watches', brands: [{ name: 'Casio', models: ['G-Shock', 'Edifice'] }, { name: 'Fossil', models: ['Grant Chronograph', 'Caroline'] }] },
+    ] },
+  ]),
+  cleaning: curatedTaxonomy('cleaning', [
+    { name: 'Household Cleaning', icon: 'home-outline', types: [
+      { name: 'Surface Care', brands: [{ name: 'Dettol', models: ['Antibacterial Spray', 'Floor Cleaner'] }, { name: 'Mr Muscle', models: ['Glass Cleaner', 'Kitchen Cleaner'] }] },
+      { name: 'Toilet Care', brands: [{ name: 'Harpic', models: ['Toilet Gel', 'Power Plus'] }, { name: 'Duck', models: ['Fresh Discs', 'Deep Action'] }] },
+    ] },
+    { name: 'Janitorial Supplies', icon: 'brush-outline', types: [
+      { name: 'Cleaning Tools', brands: [{ name: 'Vileda', models: ['Microfiber Mop', 'Window Squeegee'] }, { name: 'ProClean', models: ['Mop Bucket', 'Broom Set'] }] },
+      { name: 'Waste Management', brands: [{ name: 'BinPro', models: ['240L Wheelie Bin', '60L Bin'] }, { name: 'CleanCity', models: ['Bin Liner Pack', 'Waste Cart'] }] },
+    ] },
+    { name: 'Laundry Products', icon: 'water-outline', types: [
+      { name: 'Laundry Detergent', brands: [{ name: 'Omo', models: ['Powder 25kg', 'Liquid 5L'] }, { name: 'Ariel', models: ['Powder 25kg', 'Professional Liquid'] }] },
+      { name: 'Fabric Care', brands: [{ name: 'Comfort', models: ['Softener 5L', 'Concentrate'] }, { name: 'Vanish', models: ['Stain Remover', 'White Powder'] }] },
+    ] },
+  ]),
+  energy: curatedTaxonomy('energy', [
+    { name: 'Solar Panels', icon: 'sunny-outline', types: [
+      { name: 'Monocrystalline', brands: [{ name: 'Canadian Solar', models: ['450W Mono', '550W Mono'] }, { name: 'JinkoSolar', models: ['Tiger Neo 440W', 'Tiger Pro 550W'] }] },
+      { name: 'Polycrystalline', brands: [{ name: 'SunTech', models: ['330W Poly', '370W Poly'] }, { name: 'Trina Solar', models: ['Vertex 400W', 'Poly 280W'] }] },
+    ] },
+    { name: 'Inverters & Batteries', icon: 'battery-charging-outline', types: [
+      { name: 'Inverters', brands: [{ name: 'Luminous', models: ['1.5KVA Inverter', '3.5KVA Hybrid'] }, { name: 'Victron', models: ['MultiPlus II', 'EasySolar'] }] },
+      { name: 'Batteries', brands: [{ name: 'GEL Battery', models: ['200Ah GEL', '100Ah GEL'] }, { name: 'Pylontech', models: ['US3000C', 'US5000'] }] },
+    ] },
+    { name: 'Generators', icon: 'flash-outline', types: [
+      { name: 'Petrol Generators', brands: [{ name: 'Elemax', models: ['SH3900EX', 'SH7600EX'] }, { name: 'Sumec Firman', models: ['SPG3000', 'SPG5000'] }] },
+      { name: 'Diesel Generators', brands: [{ name: 'Mikano', models: ['20KVA Diesel', '100KVA Diesel'] }, { name: 'Cummins', models: ['C33', 'C110'] }] },
+    ] },
+  ]),
 };
 
 export function getCategoryTaxonomy(categoryId: string): CategoryTaxonomy {
