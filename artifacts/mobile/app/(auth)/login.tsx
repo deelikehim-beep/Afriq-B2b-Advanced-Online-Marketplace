@@ -56,8 +56,8 @@ export default function Login() {
           <Text style={styles.title}>Welcome back</Text>
           <Text style={styles.subtitle}>Sign in to continue trading</Text>
 
-          {/* Phone/Email */}
-          <Text style={styles.label}>Phone or Email</Text>
+          {/* Email */}
+          <Text style={styles.label}>Email address</Text>
           <View style={styles.inputWrap}>
             <Ionicons name="person-outline" size={18} color="#9ca3af" style={styles.inputIcon} />
             <TextInput

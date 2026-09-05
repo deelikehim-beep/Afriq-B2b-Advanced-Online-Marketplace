@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Alert, Animated, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View,
+  Alert, Animated, KeyboardAvoidingView, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -25,6 +25,7 @@ export default function Signup() {
   const [storeAddress, setStoreAddress] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     Animated.parallel([
@@ -34,6 +35,10 @@ export default function Signup() {
   }, []);
 
   const handleAuth = async (method: string) => {
+    if (method !== 'email') {
+      Alert.alert('Email sign-up available', 'This sign-in provider is not connected yet. Create your AFRIQ account with an email and password instead.');
+      return;
+    }
     setShowOnboarding(true);
   };
 
@@ -47,25 +52,28 @@ export default function Signup() {
       Alert.alert('Store address required', 'Seller profiles must include a complete store address before listing goods for sale.');
       return;
     }
-    updateUserProfile({
-      residentCountry: selected?.name ?? 'Nigeria',
-      residentCountryCode: country,
-      businessName: businessName.trim() || (role === 'seller' ? 'My AFRIQ Store' : 'My Trading Business'),
-      businessType: role === 'seller' ? 'Retailer & Supplier' : 'Buyer & Distributor',
-      storeLocation: storeLocation.trim() || selected?.name,
-      storeAddress: role === 'seller' ? storeAddress.trim() : undefined,
-      role,
-      location: storeLocation.trim() || selected?.name || 'Africa',
-    });
     if (!email.trim() || password.length < 8) {
       Alert.alert('Account details required', 'Enter an email and a password of at least 8 characters.');
       return;
     }
+    setIsSubmitting(true);
     try {
+      updateUserProfile({
+        residentCountry: selected?.name ?? 'Nigeria',
+        residentCountryCode: country,
+        businessName: businessName.trim() || (role === 'seller' ? 'My AFRIQ Store' : 'My Trading Business'),
+        businessType: role === 'seller' ? 'Retailer & Supplier' : 'Buyer & Distributor',
+        storeLocation: storeLocation.trim() || selected?.name,
+        storeAddress: role === 'seller' ? storeAddress.trim() : undefined,
+        role,
+        location: storeLocation.trim() || selected?.name || 'Africa',
+      });
       await signUp(email.trim(), password, businessName.trim() || 'AFRIQ member');
       router.replace('/(tabs)');
     } catch (error) {
       Alert.alert('Account creation failed', error instanceof Error ? error.message : 'Check your details and try again.');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -99,25 +107,30 @@ export default function Signup() {
         </LinearGradient>
       </Animated.View>
       <Modal visible={showOnboarding} transparent animationType="slide" onRequestClose={() => setShowOnboarding(false)}>
-        <View style={styles.modalOverlay}>
+        <KeyboardAvoidingView style={styles.modalOverlay} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
           <View style={[styles.onboardingSheet, { paddingBottom: insets.bottom + 20 }]}>
-            <View style={styles.pill} />
-            <Text style={styles.onboardingTitle}>Set up your AFRIQ profile</Text>
-            <Text style={styles.onboardingSub}>This helps us rank nearby suppliers and tailor your trade workspace.</Text>
-            <Text style={styles.onboardingLabel}>I am joining as</Text>
-            <View style={styles.roleRow}>
-              {(['buyer', 'seller'] as const).map(item => <TouchableOpacity key={item} onPress={() => setRole(item)} style={[styles.roleBtn, role === item && styles.roleBtnActive]}><Ionicons name={item === 'buyer' ? 'cart-outline' : 'storefront-outline'} size={18} color={role === item ? '#ffffff' : '#059669'} /><Text style={[styles.roleTxt, role === item && styles.roleTxtActive]}>{item === 'buyer' ? 'Buyer / importer' : 'Seller / supplier'}</Text></TouchableOpacity>)}
-            </View>
-            <Text style={styles.onboardingLabel}>Resident country</Text>
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingBottom: 4 }}>
-              {AFRICAN_COUNTRIES.filter(item => item.code !== 'all').map(item => <TouchableOpacity key={item.code} onPress={() => setCountry(item.code)} style={[styles.countryBtn, country === item.code && styles.countryBtnActive]}><Text style={styles.countryFlag}>{item.flag}</Text><Text style={[styles.countryTxt, country === item.code && styles.countryTxtActive]}>{item.name}</Text></TouchableOpacity>)}
+            <ScrollView showsVerticalScrollIndicator={false} keyboardShouldPersistTaps="handled">
+              <View style={styles.pill} />
+              <Text style={styles.onboardingTitle}>Set up your AFRIQ profile</Text>
+              <Text style={styles.onboardingSub}>This helps us rank nearby suppliers and tailor your trade workspace.</Text>
+              <Text style={styles.onboardingLabel}>Account details</Text>
+              <TextInput value={email} onChangeText={setEmail} placeholder="Email address" placeholderTextColor="#9ca3af" style={styles.onboardingInput} autoCapitalize="none" keyboardType="email-address" />
+              <TextInput value={password} onChangeText={setPassword} placeholder="Password (8+ characters)" placeholderTextColor="#9ca3af" style={styles.onboardingInput} secureTextEntry />
+              <Text style={styles.onboardingLabel}>I am joining as</Text>
+              <View style={styles.roleRow}>
+                {(['buyer', 'seller'] as const).map(item => <TouchableOpacity key={item} onPress={() => setRole(item)} style={[styles.roleBtn, role === item && styles.roleBtnActive]}><Ionicons name={item === 'buyer' ? 'cart-outline' : 'storefront-outline'} size={18} color={role === item ? '#ffffff' : '#059669'} /><Text style={[styles.roleTxt, role === item && styles.roleTxtActive]}>{item === 'buyer' ? 'Buyer / importer' : 'Seller / supplier'}</Text></TouchableOpacity>)}
+              </View>
+              <Text style={styles.onboardingLabel}>Resident country</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 7, paddingBottom: 4 }}>
+                {AFRICAN_COUNTRIES.filter(item => item.code !== 'all').map(item => <TouchableOpacity key={item.code} onPress={() => setCountry(item.code)} style={[styles.countryBtn, country === item.code && styles.countryBtnActive]}><Text style={styles.countryFlag}>{item.flag}</Text><Text style={[styles.countryTxt, country === item.code && styles.countryTxtActive]}>{item.name}</Text></TouchableOpacity>)}
+              </ScrollView>
+              <TextInput value={businessName} onChangeText={setBusinessName} placeholder={role === 'seller' ? 'Store or company name' : 'Business name (optional)'} placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
+              <TextInput value={storeLocation} onChangeText={setStoreLocation} placeholder="City, market or store location" placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
+              {role === 'seller' && <TextInput value={storeAddress} onChangeText={setStoreAddress} placeholder="Complete store address (required for sellers)" placeholderTextColor="#9ca3af" style={styles.onboardingInput} />}
+              <TouchableOpacity disabled={isSubmitting} style={[styles.continueBtn, isSubmitting && styles.continueBtnDisabled]} onPress={() => finishAuth('email')}><Text style={styles.continueTxt}>{isSubmitting ? 'Creating account…' : 'Create AFRIQ account'}</Text><Ionicons name="arrow-forward" size={17} color="#ffffff" /></TouchableOpacity>
             </ScrollView>
-            <TextInput value={businessName} onChangeText={setBusinessName} placeholder={role === 'seller' ? 'Store or company name' : 'Business name (optional)'} placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
-            <TextInput value={storeLocation} onChangeText={setStoreLocation} placeholder="City, market or store location" placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
-            {role === 'seller' && <TextInput value={storeAddress} onChangeText={setStoreAddress} placeholder="Complete store address (required for sellers)" placeholderTextColor="#9ca3af" style={styles.onboardingInput} />}
-            <TouchableOpacity style={styles.continueBtn} onPress={() => finishAuth('email')}><Text style={styles.continueTxt}>Create AFRIQ account</Text><Ionicons name="arrow-forward" size={17} color="#ffffff" /></TouchableOpacity>
           </View>
-        </View>
+        </KeyboardAvoidingView>
       </Modal>
 
       {/* Card */}
@@ -247,7 +260,7 @@ const styles = StyleSheet.create({
   terms: { fontSize: 12, color: '#9ca3af', textAlign: 'center', lineHeight: 18, marginTop: 12, fontFamily: 'Inter_400Regular' },
   termsLink: { color: '#059669', fontFamily: 'Inter_500Medium' },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
-  onboardingSheet: { backgroundColor: '#ffffff', borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 22, paddingTop: 12 },
+  onboardingSheet: { maxHeight: '92%', backgroundColor: '#ffffff', borderTopLeftRadius: 26, borderTopRightRadius: 26, paddingHorizontal: 22, paddingTop: 12 },
   onboardingTitle: { fontSize: 21, color: '#111827', fontFamily: 'Inter_700Bold' },
   onboardingSub: { fontSize: 12, lineHeight: 18, color: '#6b7280', fontFamily: 'Inter_400Regular', marginTop: 5, marginBottom: 17 },
   onboardingLabel: { fontSize: 12, color: '#111827', fontFamily: 'Inter_600SemiBold', marginBottom: 8, marginTop: 8 },
@@ -263,5 +276,6 @@ const styles = StyleSheet.create({
   countryTxtActive: { color: '#047857' },
   onboardingInput: { height: 45, borderWidth: 1, borderColor: '#e5e7eb', borderRadius: 10, paddingHorizontal: 12, fontSize: 13, color: '#111827', marginTop: 10 },
   continueBtn: { height: 49, borderRadius: 12, backgroundColor: '#059669', marginTop: 16, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 },
+  continueBtnDisabled: { opacity: 0.6 },
   continueTxt: { color: '#ffffff', fontSize: 14, fontFamily: 'Inter_700Bold' },
 });
