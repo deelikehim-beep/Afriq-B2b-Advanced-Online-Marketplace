@@ -3,7 +3,8 @@ import React, { createContext, useContext, useEffect, useState } from 'react';
 import { DEMO_MODE, ESCROW_FEE_RATE } from '@/constants/config';
 import {
   DEMO_ORDERS, DEMO_CONVERSATIONS, DEMO_TRANSACTIONS, DEMO_NOTIFICATIONS, DEMO_USER,
-  type CartItem, type Order, type Conversation, type Transaction, type Notif, type AppUser, type Product,
+  type CartItem, type Order, type Conversation, type Transaction, type Notif, type AppUser, type Product, type ProductListingDraft,
+  hasCompleteSellerProfile,
   PRODUCTS, PRODUCT_LOGISTICS, calculateShippingFee,
 } from '@/constants/data';
 
@@ -16,6 +17,7 @@ interface AppContextType {
   conversations: Conversation[];
   transactions: Transaction[];
   notifications: Notif[];
+  listedProducts: Product[];
   cartCount: number;
   cartTotal: number;
   unreadMessages: number;
@@ -29,6 +31,7 @@ interface AppContextType {
   moveSavedToCart: (item: CartItem) => void;
   isSaved: (productId: string, variant?: string) => boolean;
   updateUserProfile: (updates: Partial<AppUser>) => void;
+  createProductListing: (draft: ProductListingDraft) => { ok: boolean; error?: string; product?: Product };
   toggleFollowSupplier: (supplierId: string) => void;
   startProductConversation: (product: Product) => string;
   clearCart: () => void;
@@ -54,6 +57,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [conversations, setConversations] = useState<Conversation[]>(DEMO_MODE ? DEMO_CONVERSATIONS : []);
   const [transactions, setTransactions] = useState<Transaction[]>(DEMO_MODE ? DEMO_TRANSACTIONS : []);
   const [notifications, setNotifications] = useState<Notif[]>(DEMO_MODE ? DEMO_NOTIFICATIONS : []);
+  const [listedProducts, setListedProducts] = useState<Product[]>([]);
 
   useEffect(() => {
     AsyncStorage.getItem('@afriq_saved_items').then(value => {
@@ -126,6 +130,64 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateUserProfile = (updates: Partial<AppUser>) => {
     setUser(prev => ({ ...prev, ...updates }));
+  };
+
+  const createProductListing = (draft: ProductListingDraft) => {
+    if (user.role !== 'seller') {
+      return { ok: false, error: 'Only seller accounts can publish goods. Update your account role before listing.' };
+    }
+    if (!hasCompleteSellerProfile(user)) {
+      return {
+        ok: false,
+        error: 'Complete your public business profile with a country and full store address before listing a good.',
+      };
+    }
+    if (!draft.name.trim() || !draft.category || !draft.subcategory || !draft.type || !draft.brand.trim() || !draft.model.trim()) {
+      return { ok: false, error: 'Complete the product identity fields before submitting.' };
+    }
+    if (!Number.isFinite(draft.price) || draft.price <= 0) {
+      return { ok: false, error: 'Enter a valid price greater than zero.' };
+    }
+    if (!Number.isInteger(draft.moq) || draft.moq <= 0) {
+      return { ok: false, error: 'MOQ must be a whole number greater than zero.' };
+    }
+    if (!Number.isInteger(draft.stock) || draft.stock <= 0) {
+      return { ok: false, error: 'Stock must be a whole number greater than zero.' };
+    }
+    if (draft.stock < draft.moq) {
+      return { ok: false, error: 'Stock cannot be lower than the MOQ, just like cart quantity limits.' };
+    }
+    if (draft.variants.length === 0 || draft.images.length === 0 || !draft.delivery.trim()) {
+      return { ok: false, error: 'Add at least one variant, one product image, and delivery details.' };
+    }
+
+    const product: Product = {
+      id: `seller_${Date.now()}`,
+      name: draft.name.trim(),
+      category: draft.category,
+      price: draft.price,
+      moq: draft.moq,
+      unit: draft.unit.trim() || 'units',
+      stock: draft.stock,
+      supplier: user.businessName,
+      supplierId: user.id,
+      supplierTrust: user.trustScore,
+      supplierDeals: user.totalDeals,
+      location: user.storeLocation?.trim() || user.location,
+      country: user.residentCountryCode,
+      image: draft.images[0],
+      images: draft.images,
+      rating: 0,
+      reviews: 0,
+      sold: 0,
+      description: `${draft.brand.trim()} ${draft.model.trim()} · ${draft.type.trim()} · ${draft.subcategory.trim()}`,
+      variants: draft.variants,
+      delivery: draft.delivery.trim(),
+      escrow: draft.escrow,
+      bulkPricing: [],
+    };
+    setListedProducts(prev => [product, ...prev]);
+    return { ok: true, product };
   };
 
   const toggleFollowSupplier = (supplierId: string) => {
@@ -339,10 +401,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-       user, cart, savedItems, followedSuppliers, orders, conversations, transactions, notifications,
+       user, cart, savedItems, followedSuppliers, orders, conversations, transactions, notifications, listedProducts,
       cartCount, cartTotal, unreadMessages, unreadNotifs,
         addToCart, removeFromCart, updateCartQty, getProductStock, saveItem, removeSavedItem, moveSavedToCart, isSaved,
-       updateUserProfile, toggleFollowSupplier, startProductConversation, clearCart,
+       updateUserProfile, createProductListing, toggleFollowSupplier, startProductConversation, clearCart,
       placeOrder, confirmDelivery,
       sendMessage, markMessagesRead,
       markNotifRead, markAllNotifsRead,

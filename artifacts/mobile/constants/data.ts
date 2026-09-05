@@ -229,6 +229,22 @@ export interface CartItem {
   sizeClass?: 'small' | 'medium' | 'large' | 'oversized';
 }
 
+export interface ProductListingDraft {
+  name: string;
+  category: string;
+  subcategory: string;
+  type: string;
+  brand: string;
+  model: string;
+  price: number;
+  moq: number;
+  unit: string;
+  stock: number;
+  variants: string[];
+  images: string[];
+  delivery: string;
+  escrow: boolean;
+}
 export interface AppUser {
   id: string;
   name: string;
@@ -257,6 +273,9 @@ export interface AppUser {
   businessDescription?: string;
 }
 
+export const hasCompleteSellerProfile = (
+  user: Pick<AppUser, 'role' | 'residentCountry' | 'storeAddress'>,
+) => user.role === 'seller' && Boolean(user.residentCountry?.trim() && user.storeAddress?.trim());
 export interface ProductLogistics {
   weightKg: number;
   sizeClass: 'small' | 'medium' | 'large' | 'oversized';

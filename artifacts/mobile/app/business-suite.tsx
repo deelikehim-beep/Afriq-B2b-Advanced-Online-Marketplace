@@ -4,6 +4,7 @@ import React from 'react';
 import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useApp } from '@/contexts/AppContext';
 
 const MODULES = [
   { title: 'Inventory command centre', desc: 'Stock levels, reorder points, transfers and supplier lead times.', icon: 'cube-outline', color: '#059669', badge: 'Demo preview' },
@@ -18,6 +19,14 @@ export default function BusinessSuite() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { user } = useApp();
+  const openListing = () => {
+    if (user.role === 'seller' && (!user.storeAddress?.trim() || !user.residentCountry?.trim())) {
+      router.push('/(tabs)/profile?edit=business' as any);
+      return;
+    }
+    router.push('/list-product' as any);
+  };
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
       <StatusBar barStyle="dark-content" />
@@ -34,6 +43,16 @@ export default function BusinessSuite() {
           <Text style={styles.heroDesc}>Bring orders, stock, suppliers, payments and delivery into one clear workspace. These workflows are simulated in demo mode.</Text>
           <View style={styles.heroStats}><View><Text style={styles.heroStatValue}>147</Text><Text style={styles.heroStatLabel}>trade deals</Text></View><View><Text style={styles.heroStatValue}>98%</Text><Text style={styles.heroStatLabel}>success rate</Text></View><View><Text style={styles.heroStatValue}>12</Text><Text style={styles.heroStatLabel}>active SKUs</Text></View></View>
         </View>
+        <TouchableOpacity style={[styles.listCta, { backgroundColor: colors.card, borderColor: colors.brandLight }]} onPress={openListing} activeOpacity={0.85}>
+          <View style={[styles.listCtaIcon, { backgroundColor: colors.brandBg }]}>
+            <Ionicons name="add-circle-outline" size={25} color={colors.brand} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.listCtaTitle, { color: colors.foreground }]}>List a product</Text>
+            <Text style={[styles.listCtaDesc, { color: colors.mutedForeground }]}>Publish a good with your public store details, stock and delivery terms.</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={19} color={colors.brand} />
+        </TouchableOpacity>
         <View style={styles.sectionHead}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Operations</Text><Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>Tap a module to preview</Text></View>
         <View style={styles.grid}>
           {MODULES.map(module => (
@@ -83,4 +102,8 @@ const styles = StyleSheet.create({
   moduleBadgeTxt: { fontSize: 9, fontFamily: 'Inter_600SemiBold' },
   notice: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 12, borderRadius: 12, marginTop: 16 },
   noticeTxt: { flex: 1, fontSize: 11, lineHeight: 17, fontFamily: 'Inter_400Regular' },
+  listCta: { flexDirection: 'row', alignItems: 'center', gap: 12, borderRadius: 16, borderWidth: 1, padding: 14, marginBottom: 22 },
+  listCtaIcon: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
+  listCtaTitle: { fontSize: 15, fontFamily: 'Inter_700Bold' },
+  listCtaDesc: { fontSize: 11, lineHeight: 16, marginTop: 3, fontFamily: 'Inter_400Regular' },
 });

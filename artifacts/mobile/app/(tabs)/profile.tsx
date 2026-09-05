@@ -1,7 +1,7 @@
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
-import React, { useState } from 'react';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
 import { Alert, Modal, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
@@ -23,6 +23,7 @@ const SETTINGS = [
 export default function Profile() {
   const colors = useColors();
   const router = useRouter();
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
   const { user, orders, transactions, savedItems, updateUserProfile } = useApp();
   const { logout } = useAuth();
@@ -38,6 +39,10 @@ export default function Profile() {
     website: user.website ?? '',
     businessDescription: user.businessDescription ?? '',
   });
+
+  useEffect(() => {
+    if (edit === 'business') setEditVisible(true);
+  }, [edit]);
 
   const handleLogout = () => {
     Alert.alert('Sign Out', 'Are you sure you want to sign out?', [
