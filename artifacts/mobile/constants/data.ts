@@ -381,6 +381,33 @@ export const DEMO_USER: AppUser = {
   businessDescription: 'Importer and distributor serving independent retailers across West Africa.',
 };
 
+export const LIVE_USER: AppUser = {
+  id: '',
+  name: '',
+  phone: '',
+  email: '',
+  balance: 0,
+  escrowLocked: 0,
+  trustScore: 0,
+  verified: false,
+  location: '',
+  businessName: '',
+  businessType: '',
+  memberSince: new Date().getFullYear().toString(),
+  totalDeals: 0,
+  successRate: 0,
+  avatar: '',
+  role: 'buyer',
+  bankName: '',
+  accountNumber: '',
+  residentCountry: '',
+  residentCountryCode: '',
+  storeLocation: '',
+  storeAddress: '',
+  website: '',
+  businessDescription: '',
+};
+
 // ─── Categories ──────────────────────────────────────────────
 export const CATEGORIES: Category[] = [
   { id: 'all', name: 'All', icon: 'grid', count: 2400 },

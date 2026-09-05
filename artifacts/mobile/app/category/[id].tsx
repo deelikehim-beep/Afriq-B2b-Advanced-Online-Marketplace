@@ -342,7 +342,7 @@ export default function CategoryScreen() {
         <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><Ionicons name="arrow-back" size={22} color={colors.foreground} /></TouchableOpacity>
         <View style={{ flex: 1 }}>
           <Text style={[styles.title, { color: colors.foreground }]}>{category.name}</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>{filtered.length} wholesale listings · updated by AFRIQ AI</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>{filtered.length} wholesale listings · updated with marketplace signals</Text>
         </View>
         <TouchableOpacity onPress={() => router.push('/saved')} style={styles.headerIcon}><Ionicons name="bookmark-outline" size={21} color={colors.foreground} /></TouchableOpacity>
       </View>
@@ -366,7 +366,7 @@ export default function CategoryScreen() {
         ListHeaderComponent={catalogHeader}
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
-        ListEmptyComponent={<View style={styles.empty}><Ionicons name="search-outline" size={44} color={colors.mutedForeground} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>No matching goods</Text><Text style={[styles.emptySub, { color: colors.mutedForeground }]}>Try widening your filters or ask AFRIQ AI to find a supplier.</Text></View>}
+        ListEmptyComponent={<View style={styles.empty}><Ionicons name="search-outline" size={44} color={colors.mutedForeground} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>No matching goods</Text><Text style={[styles.emptySub, { color: colors.mutedForeground }]}>Try widening your filters or send a supplier inquiry.</Text></View>}
         renderItem={({ item }: { item: Product }) => (
           <TouchableOpacity style={[styles.card, { backgroundColor: colors.card }]} onPress={() => router.push(`/product/${item.id}`)} activeOpacity={0.88}>
             <View style={styles.imageWrap}><Image source={{ uri: item.image }} style={styles.image} contentFit="cover" /><View style={[styles.categoryDot, { backgroundColor: CATEGORY_COLORS[item.category] ?? colors.brand }]}><Ionicons name="cube-outline" size={11} color="#ffffff" /></View></View>

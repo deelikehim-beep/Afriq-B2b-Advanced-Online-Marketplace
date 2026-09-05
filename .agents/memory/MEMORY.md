@@ -1,0 +1,1 @@
+- [Better Auth schema requirements](better-auth-schema.md) — validate auth table fields with a real sign-up request; runtime adapter checks exceed TypeScript checks.

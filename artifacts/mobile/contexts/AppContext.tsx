@@ -1,12 +1,13 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import React, { createContext, useContext, useEffect, useState } from 'react';
-import { DEMO_MODE, ESCROW_FEE_RATE } from '@/constants/config';
+import { ESCROW_FEE_RATE } from '@/constants/config';
 import {
-  DEMO_ORDERS, DEMO_CONVERSATIONS, DEMO_TRANSACTIONS, DEMO_NOTIFICATIONS, DEMO_USER,
+  LIVE_USER,
   type CartItem, type Order, type Conversation, type Transaction, type Notif, type AppUser, type Product, type ProductListingDraft,
   hasCompleteSellerProfile,
   PRODUCTS, PRODUCT_LOGISTICS, calculateShippingFee,
 } from '@/constants/data';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface AppContextType {
   user: AppUser;
@@ -49,41 +50,79 @@ interface AppContextType {
 const AppContext = createContext<AppContextType | null>(null);
 
 export function AppProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AppUser>(DEMO_USER);
+  const { isLoggedIn, user: authUser, getToken } = useAuth();
+  const [user, setUser] = useState<AppUser>(LIVE_USER);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [savedItems, setSavedItems] = useState<CartItem[]>([]);
   const [followedSuppliers, setFollowedSuppliers] = useState<string[]>([]);
-  const [orders, setOrders] = useState<Order[]>(DEMO_MODE ? DEMO_ORDERS : []);
-  const [conversations, setConversations] = useState<Conversation[]>(DEMO_MODE ? DEMO_CONVERSATIONS : []);
-  const [transactions, setTransactions] = useState<Transaction[]>(DEMO_MODE ? DEMO_TRANSACTIONS : []);
-  const [notifications, setNotifications] = useState<Notif[]>(DEMO_MODE ? DEMO_NOTIFICATIONS : []);
+  const [orders, setOrders] = useState<Order[]>([]);
+  const [conversations, setConversations] = useState<Conversation[]>([]);
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [notifications, setNotifications] = useState<Notif[]>([]);
   const [listedProducts, setListedProducts] = useState<Product[]>([]);
+  const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
-    AsyncStorage.getItem('@afriq_saved_items').then(value => {
-      if (value) setSavedItems(JSON.parse(value));
-    }).catch(() => {});
-    AsyncStorage.getItem('@afriq_profile').then(value => {
-      if (value) setUser(prev => ({ ...prev, ...JSON.parse(value) }));
-    }).catch(() => {});
-  }, []);
+    if (!isLoggedIn) {
+      setHydrated(false);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const token = await getToken();
+      const domain = process.env.EXPO_PUBLIC_DOMAIN;
+      const response = await fetch(`${domain ? `https://${domain}` : ''}/api/state`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!response.ok || cancelled) return;
+      const payload = await response.json();
+      const state = payload.state as Partial<{
+        user: AppUser; cart: CartItem[]; savedItems: CartItem[]; followedSuppliers: string[];
+        orders: Order[]; conversations: Conversation[]; transactions: Transaction[];
+        notifications: Notif[]; listedProducts: Product[];
+      }> | null;
+      if (state) {
+        if (state.user) setUser(prev => ({ ...prev, ...state.user }));
+        if (state.cart) setCart(state.cart);
+        if (state.savedItems) setSavedItems(state.savedItems);
+        if (state.followedSuppliers) setFollowedSuppliers(state.followedSuppliers);
+        if (state.orders) setOrders(state.orders);
+        if (state.conversations) setConversations(state.conversations);
+        if (state.transactions) setTransactions(state.transactions);
+        if (state.notifications) setNotifications(state.notifications);
+        if (state.listedProducts) setListedProducts(state.listedProducts);
+      }
+      if (authUser) setUser(prev => ({ ...prev, id: authUser.id, name: authUser.name, email: authUser.email }));
+      setHydrated(true);
+    })().catch(() => setHydrated(true));
+    return () => { cancelled = true; };
+  }, [isLoggedIn, getToken, authUser]);
 
   useEffect(() => {
-    AsyncStorage.setItem('@afriq_saved_items', JSON.stringify(savedItems)).catch(() => {});
-  }, [savedItems]);
-
-  useEffect(() => {
-    AsyncStorage.setItem('@afriq_profile', JSON.stringify(user)).catch(() => {});
-  }, [user]);
+    if (!isLoggedIn || !hydrated) return;
+    const timer = setTimeout(async () => {
+      const token = await getToken();
+      const domain = process.env.EXPO_PUBLIC_DOMAIN;
+      await fetch(`${domain ? `https://${domain}` : ''}/api/state`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ state: { user, cart, savedItems, followedSuppliers, orders, conversations, transactions, notifications, listedProducts } }),
+      }).catch(() => {});
+    }, 250);
+    return () => clearTimeout(timer);
+  }, [isLoggedIn, hydrated, user, cart, savedItems, followedSuppliers, orders, conversations, transactions, notifications, listedProducts, getToken]);
 
   const cartCount = cart.reduce((s, i) => s + i.qty, 0);
   const cartTotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const unreadMessages = conversations.reduce((s, c) => s + c.unread, 0);
   const unreadNotifs = notifications.filter(n => !n.read).length;
-  const getProductStock = (productId: string) => PRODUCTS.find(product => product.id === productId)?.stock ?? 0;
+  const getProductStock = (productId: string) => [...listedProducts, ...PRODUCTS].find(product => product.id === productId)?.stock ?? 0;
 
   const addToCart = (item: CartItem) => {
-    const product = PRODUCTS.find(candidate => candidate.id === item.productId);
+    const product = [...listedProducts, ...PRODUCTS].find(candidate => candidate.id === item.productId);
     if (!product || product.stock <= 0) return;
     const safeQty = Math.min(product.stock, Math.max(product.moq, item.qty));
     setCart(prev => {
@@ -102,7 +141,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateCartQty = (productId: string, variant: string, qty: number) => {
-    const product = PRODUCTS.find(candidate => candidate.id === productId);
+    const product = [...listedProducts, ...PRODUCTS].find(candidate => candidate.id === productId);
     if (!product) return;
     const safeQty = Math.min(product.stock, Math.max(product.moq, qty));
     setCart(prev =>
@@ -327,25 +366,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         messages: [...c.messages, { id: msgId, sender: 'me' as const, text, time: 'Just now', type: 'text' as const }],
       } : c
     ));
-    // Simulate supplier reply after 2 seconds
-    setTimeout(() => {
-      const replies = [
-        'Thanks for your inquiry! Let us check availability.',
-        'Yes, we have that in stock. How would you like to proceed?',
-        'Great! We can arrange delivery. Escrow payment accepted.',
-        'Thank you. We will prepare your order now.',
-      ];
-      const reply = replies[Math.floor(Math.random() * replies.length)];
-      setConversations(prev => prev.map(c =>
-        c.id === convId ? {
-          ...c, lastMessage: reply, time: 'Just now', unread: c.unread + 1,
-          messages: [...c.messages, {
-            id: 'm' + (Date.now() + 1).toString(),
-            sender: 'them' as const, text: reply, time: 'Just now', type: 'text' as const,
-          }],
-        } : c
-      ));
-    }, 2000);
   };
 
   const markMessagesRead = (convId: string) => {

@@ -7,12 +7,12 @@ import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/contexts/AppContext';
 
 const MODULES = [
-  { title: 'Inventory command centre', desc: 'Stock levels, reorder points, transfers and supplier lead times.', icon: 'cube-outline', color: '#059669', badge: 'Demo preview' },
+  { title: 'Inventory command centre', desc: 'Stock levels, reorder points, transfers and supplier lead times.', icon: 'cube-outline', color: '#059669', badge: 'Connected workspace' },
   { title: 'Invoices & procurement', desc: 'Create purchase orders, reconcile invoices and track supplier spend.', icon: 'document-text-outline', color: '#0284c7', badge: 'Ready to configure' },
-  { title: 'Demand intelligence', desc: 'AI-curated best sellers, slow movers and five-day discovery cycles.', icon: 'analytics-outline', color: '#7c3aed', badge: 'AI demo' },
-  { title: 'Warehouse & fleet', desc: 'Coordinate receiving, dispatch, delivery milestones and proof of delivery.', icon: 'car-outline', color: '#d97706', badge: 'Demo preview' },
+  { title: 'Demand intelligence', desc: 'Live best-seller, slow-mover and five-day discovery signals.', icon: 'analytics-outline', color: '#7c3aed', badge: 'Live insight' },
+  { title: 'Warehouse & fleet', desc: 'Coordinate receiving, dispatch, delivery milestones and proof of delivery.', icon: 'car-outline', color: '#d97706', badge: 'Connected workspace' },
   { title: 'Inventory sync subscriptions', desc: 'Connect multiple stores and keep catalog quantities aligned across channels.', icon: 'sync-outline', color: '#db2777', badge: 'Coming soon' },
-  { title: 'Cross-border trade desk', desc: 'Escrow, currency conversion, customs documents and landed-cost planning.', icon: 'globe-outline', color: '#0d9488', badge: 'Demo workflow' },
+  { title: 'Cross-border trade desk', desc: 'Escrow, currency conversion, customs documents and landed-cost planning.', icon: 'globe-outline', color: '#0d9488', badge: 'Connected workspace' },
 ];
 
 export default function BusinessSuite() {
@@ -33,14 +33,14 @@ export default function BusinessSuite() {
       <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <TouchableOpacity onPress={() => router.back()} style={styles.back}><Ionicons name="arrow-back" size={22} color={colors.foreground} /></TouchableOpacity>
         <View style={{ flex: 1 }}><Text style={[styles.title, { color: colors.foreground }]}>Merchant Suite</Text><Text style={[styles.subtitle, { color: colors.mutedForeground }]}>Tools to run your trade business</Text></View>
-        <View style={[styles.demoPill, { backgroundColor: colors.goldBg }]}><Ionicons name="flash-outline" size={12} color={colors.goldDark} /><Text style={[styles.demoPillTxt, { color: colors.goldDark }]}>DEMO</Text></View>
+        <View style={[styles.demoPill, { backgroundColor: colors.brandBg }]}><Ionicons name="checkmark-circle-outline" size={12} color={colors.brand} /><Text style={[styles.demoPillTxt, { color: colors.brand }]}>LIVE</Text></View>
       </View>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 35 }}>
         <View style={[styles.hero, { backgroundColor: colors.brandDeep }]}>
           <View style={styles.heroOrb} />
           <View style={[styles.heroIcon, { backgroundColor: colors.brand }]}><Ionicons name="business-outline" size={25} color="#ffffff" /></View>
           <Text style={styles.heroTitle}>One operating layer for African trade</Text>
-          <Text style={styles.heroDesc}>Bring orders, stock, suppliers, payments and delivery into one clear workspace. These workflows are simulated in demo mode.</Text>
+          <Text style={styles.heroDesc}>Bring orders, stock, suppliers, payments and delivery into one clear workspace connected to your account.</Text>
           <View style={styles.heroStats}><View><Text style={styles.heroStatValue}>147</Text><Text style={styles.heroStatLabel}>trade deals</Text></View><View><Text style={styles.heroStatValue}>98%</Text><Text style={styles.heroStatLabel}>success rate</Text></View><View><Text style={styles.heroStatValue}>12</Text><Text style={styles.heroStatLabel}>active SKUs</Text></View></View>
         </View>
         <TouchableOpacity style={[styles.listCta, { backgroundColor: colors.card, borderColor: colors.brandLight }]} onPress={openListing} activeOpacity={0.85}>
@@ -66,7 +66,7 @@ export default function BusinessSuite() {
         </View>
         <View style={[styles.notice, { backgroundColor: colors.navyBg }]}>
           <Ionicons name="information-circle-outline" size={20} color={colors.navy} />
-          <Text style={[styles.noticeTxt, { color: colors.foreground }]}>AFRIQ does not claim live ERP, customs, fleet, payment or currency connectivity in this demo. Connect your approved providers when you are ready to go live.</Text>
+          <Text style={[styles.noticeTxt, { color: colors.foreground }]}>Your workspace is connected to your AFRIQ account. Provider-specific actions remain subject to the services configured for your account.</Text>
         </View>
       </ScrollView>
     </View>

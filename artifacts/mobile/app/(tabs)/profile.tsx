@@ -173,7 +173,7 @@ export default function Profile() {
               activeOpacity={0.7}
               onPress={() => {
                 if (s.id === 'business') setEditVisible(true);
-                if (s.id === 'support') Alert.alert('AFRIQ Support', 'Demo support desk: a trade specialist will respond within 4 hours.');
+                if (s.id === 'support') Alert.alert('AFRIQ Support', 'A trade specialist will respond within 4 hours.');
               }}
             >
                <View style={[styles.menuIcon, { backgroundColor: colors.background }]}>

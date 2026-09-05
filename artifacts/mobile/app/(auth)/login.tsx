@@ -1,23 +1,28 @@
 import { Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import {
-  KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet,
+  Alert, KeyboardAvoidingView, Platform, ScrollView, StatusBar, StyleSheet,
   Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
-import { DEMO_MODE } from '@/constants/config';
 
 export default function Login() {
   const router = useRouter();
   const { login } = useAuth();
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const insets = useSafeAreaInsets();
   const phoneRef = useRef<TextInput>(null);
 
   const handleLogin = async () => {
-    await login('email');
-    router.replace('/(tabs)');
+    try {
+      await login(email.trim(), password);
+      router.replace('/(tabs)');
+    } catch (error) {
+      Alert.alert('Sign in failed', error instanceof Error ? error.message : 'Check your details and try again.');
+    }
   };
 
   return (
@@ -51,20 +56,15 @@ export default function Login() {
           <Text style={styles.title}>Welcome back</Text>
           <Text style={styles.subtitle}>Sign in to continue trading</Text>
 
-          {DEMO_MODE && (
-            <View style={styles.demoBanner}>
-              <Ionicons name="flash-outline" size={14} color="#d97706" />
-              <Text style={styles.demoTxt}>Demo Mode — tap Sign In to enter instantly</Text>
-            </View>
-          )}
-
           {/* Phone/Email */}
           <Text style={styles.label}>Phone or Email</Text>
           <View style={styles.inputWrap}>
             <Ionicons name="person-outline" size={18} color="#9ca3af" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder={DEMO_MODE ? 'chinedu@okafortrading.com' : 'Enter phone or email'}
+              value={email}
+              onChangeText={setEmail}
+              placeholder="Enter email"
               placeholderTextColor="#9ca3af"
               keyboardType="email-address"
               autoCapitalize="none"
@@ -78,7 +78,9 @@ export default function Login() {
             <Ionicons name="lock-closed-outline" size={18} color="#9ca3af" style={styles.inputIcon} />
             <TextInput
               style={styles.input}
-              placeholder={DEMO_MODE ? '••••••••' : 'Enter password'}
+              value={password}
+              onChangeText={setPassword}
+              placeholder="Enter password"
               placeholderTextColor="#9ca3af"
               secureTextEntry
             />
@@ -101,7 +103,7 @@ export default function Login() {
           </View>
 
           {/* WhatsApp */}
-          <TouchableOpacity style={styles.waBtn} onPress={() => { login('whatsapp'); router.replace('/(tabs)'); }} activeOpacity={0.85}>
+          <TouchableOpacity style={styles.waBtn} onPress={() => Alert.alert('WhatsApp sign-in', 'Use your AFRIQ email and password for secure sign-in. WhatsApp sign-in will be added when messaging verification is connected.')} activeOpacity={0.85}>
             <Ionicons name="logo-whatsapp" size={20} color="#25D366" />
             <Text style={styles.waBtnTxt}>Sign in with WhatsApp</Text>
           </TouchableOpacity>
@@ -132,8 +134,6 @@ const styles = StyleSheet.create({
   title: { fontSize: 28, fontWeight: '700', color: '#111827', fontFamily: 'Inter_700Bold', marginBottom: 6 },
   subtitle: { fontSize: 15, color: '#6b7280', fontFamily: 'Inter_400Regular', marginBottom: 24 },
 
-  demoBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#fef3c7', borderRadius: 10, padding: 10, marginBottom: 20 },
-  demoTxt: { fontSize: 12, color: '#d97706', fontFamily: 'Inter_500Medium', flex: 1 },
 
   label: { fontSize: 13, fontWeight: '600', color: '#374151', fontFamily: 'Inter_600SemiBold', marginBottom: 6 },
   inputWrap: { flexDirection: 'row', alignItems: 'center', borderWidth: 1.5, borderColor: '#e5e7eb', borderRadius: 12, paddingHorizontal: 14, marginBottom: 16, height: 52 },

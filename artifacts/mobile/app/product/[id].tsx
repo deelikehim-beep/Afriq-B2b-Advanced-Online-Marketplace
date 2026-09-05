@@ -347,7 +347,7 @@ export default function ProductDetail() {
             <View style={styles.aiPanelHeader}>
               <View style={[styles.aiBadge, { backgroundColor: colors.brand }]}>
                 <Ionicons name="sparkles" size={11} color="#ffffff" />
-                <Text style={styles.aiBadgeTxt}>AFRIQ AI</Text>
+                <Text style={styles.aiBadgeTxt}>Market insight</Text>
               </View>
               <Text style={[styles.aiPanelTitle, { color: colors.foreground }]}>Price Intelligence</Text>
             </View>
@@ -543,7 +543,7 @@ export default function ProductDetail() {
             <View style={styles.aiReviewHeader}>
               <View style={[styles.aiBadge, { backgroundColor: '#059669' }]}>
                 <Ionicons name="sparkles" size={11} color="#ffffff" />
-                <Text style={styles.aiBadgeTxt}>AFRIQ AI</Text>
+                <Text style={styles.aiBadgeTxt}>Buyer insight</Text>
               </View>
               <Text style={[styles.aiReviewTitle, { color: '#064e3b' }]}>Buyer Intelligence</Text>
             </View>

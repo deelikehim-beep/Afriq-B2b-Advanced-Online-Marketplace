@@ -141,7 +141,7 @@ export default function Marketplace() {
           ) : (
             <View style={[styles.aiSearchBadge, { backgroundColor: colors.brandBg }]}>
               <Ionicons name="sparkles" size={11} color={colors.brand} />
-              <Text style={[styles.aiSearchTxt, { color: colors.brand }]}>AI</Text>
+              <Text style={[styles.aiSearchTxt, { color: colors.brand }]}>Smart</Text>
             </View>
           )}
         </View>
@@ -253,7 +253,7 @@ export default function Marketplace() {
         <View style={[styles.aiDiscovery, { backgroundColor: colors.navyBg }]}>
           <View style={[styles.aiDiscoveryIcon, { backgroundColor: colors.navy }]}><Ionicons name="sparkles" size={13} color="#ffffff" /></View>
           <View style={{ flex: 1 }}>
-            <Text style={[styles.aiDiscoveryTitle, { color: colors.foreground }]}>AI long-tail picks</Text>
+            <Text style={[styles.aiDiscoveryTitle, { color: colors.foreground }]}>Long-tail picks</Text>
             <Text style={[styles.aiDiscoverySub, { color: colors.mutedForeground }]}>Less-bought categories with a 5-day discovery cycle</Text>
           </View>
           <Ionicons name="arrow-forward" size={16} color={colors.navy} />

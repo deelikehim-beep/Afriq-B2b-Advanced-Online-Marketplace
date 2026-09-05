@@ -4,7 +4,7 @@
 
 // Set DEMO_MODE to false before production launch.
 // When true: sample data is preloaded, auth is simulated, demo banner visible.
-export const DEMO_MODE = true;
+export const DEMO_MODE = false;
 
 export const ESCROW_FEE_RATE = 0.025; // 2.5%
 export const DELIVERY_FEE_PER_SUPPLIER = 25000; // ₦25,000 per supplier

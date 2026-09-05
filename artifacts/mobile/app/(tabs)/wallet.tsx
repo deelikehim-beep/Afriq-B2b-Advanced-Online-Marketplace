@@ -266,7 +266,7 @@ export default function Wallet() {
             {[
               ['lock-closed', 'Pay safely', 'Funds stay protected while your supplier prepares the order.'],
               ['navigate-outline', 'Track the trade', 'Follow shipping, customs and delivery milestones in one place.'],
-              ['checkmark-circle-outline', 'Release or dispute', 'Confirm delivery to release funds, or open a demo dispute.'],
+              ['checkmark-circle-outline', 'Release or dispute', 'Confirm delivery to release funds, or open a dispute for review.'],
             ].map(([icon, title, desc]) => (
               <View key={title} style={styles.escrowStepRow}>
                 <View style={[styles.escrowStepIcon, { backgroundColor: colors.background }]}><Ionicons name={icon as any} size={17} color={colors.brand} /></View>
@@ -275,7 +275,7 @@ export default function Wallet() {
             ))}
             <View style={[styles.bvnNotice, { backgroundColor: colors.goldBg }]}>
               <Ionicons name="time-outline" size={18} color={colors.goldDark} />
-              <Text style={[styles.bvnNoticeText, { color: colors.goldDeep }]}>Demo policy: wallets with no activity for 5 months may require a fresh BVN/KYC check before transfers are re-enabled.</Text>
+              <Text style={[styles.bvnNoticeText, { color: colors.goldDeep }]}>Wallets with no activity for 5 months may require a fresh BVN/KYC check before transfers are re-enabled.</Text>
             </View>
             <TouchableOpacity style={[styles.confirmBtn, { backgroundColor: colors.brand }]} onPress={() => setModal(null)}>
               <Text style={styles.confirmBtnTxt}>Got it</Text>

@@ -9,11 +9,10 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
 import { useApp } from '@/contexts/AppContext';
 import { AFRICAN_COUNTRIES } from '@/constants/data';
-import { DEMO_MODE } from '@/constants/config';
 
 export default function Signup() {
   const router = useRouter();
-  const { login } = useAuth();
+  const { signUp } = useAuth();
   const { updateUserProfile } = useApp();
   const insets = useSafeAreaInsets();
   const cardAnim = useRef(new Animated.Value(380)).current;
@@ -24,6 +23,8 @@ export default function Signup() {
   const [businessName, setBusinessName] = useState('');
   const [storeLocation, setStoreLocation] = useState('');
   const [storeAddress, setStoreAddress] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
 
   useEffect(() => {
     Animated.parallel([
@@ -56,8 +57,16 @@ export default function Signup() {
       role,
       location: storeLocation.trim() || selected?.name || 'Africa',
     });
-    await login(method);
-    router.replace('/(tabs)');
+    if (!email.trim() || password.length < 8) {
+      Alert.alert('Account details required', 'Enter an email and a password of at least 8 characters.');
+      return;
+    }
+    try {
+      await signUp(email.trim(), password, businessName.trim() || 'AFRIQ member');
+      router.replace('/(tabs)');
+    } catch (error) {
+      Alert.alert('Account creation failed', error instanceof Error ? error.message : 'Check your details and try again.');
+    }
   };
 
   return (
@@ -106,7 +115,7 @@ export default function Signup() {
             <TextInput value={businessName} onChangeText={setBusinessName} placeholder={role === 'seller' ? 'Store or company name' : 'Business name (optional)'} placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
             <TextInput value={storeLocation} onChangeText={setStoreLocation} placeholder="City, market or store location" placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
             {role === 'seller' && <TextInput value={storeAddress} onChangeText={setStoreAddress} placeholder="Complete store address (required for sellers)" placeholderTextColor="#9ca3af" style={styles.onboardingInput} />}
-            <TouchableOpacity style={styles.continueBtn} onPress={() => finishAuth('demo')}><Text style={styles.continueTxt}>Enter AFRIQ marketplace</Text><Ionicons name="arrow-forward" size={17} color="#ffffff" /></TouchableOpacity>
+            <TouchableOpacity style={styles.continueBtn} onPress={() => finishAuth('email')}><Text style={styles.continueTxt}>Create AFRIQ account</Text><Ionicons name="arrow-forward" size={17} color="#ffffff" /></TouchableOpacity>
           </View>
         </View>
       </Modal>
@@ -122,15 +131,10 @@ export default function Signup() {
           {/* Pill handle */}
           <View style={styles.pill} />
 
-          {DEMO_MODE && (
-            <View style={styles.demoBanner}>
-              <Ionicons name="flash-outline" size={14} color="#d97706" />
-              <Text style={styles.demoTxt}>Demo Mode — tap any option to enter instantly</Text>
-            </View>
-          )}
-
           <Text style={styles.cardTitle}>Create your account</Text>
           <Text style={styles.cardSub}>Start trading in minutes — no paperwork required</Text>
+          <TextInput value={email} onChangeText={setEmail} placeholder="Email address" placeholderTextColor="#9ca3af" style={styles.onboardingInput} autoCapitalize="none" keyboardType="email-address" />
+          <TextInput value={password} onChangeText={setPassword} placeholder="Password (8+ characters)" placeholderTextColor="#9ca3af" style={styles.onboardingInput} secureTextEntry />
 
           {/* Google */}
           <TouchableOpacity style={styles.socialBtn} onPress={() => handleAuth('google')} activeOpacity={0.8}>
@@ -217,11 +221,6 @@ const styles = StyleSheet.create({
   },
   pill: { width: 40, height: 4, backgroundColor: '#e5e7eb', borderRadius: 2, alignSelf: 'center', marginBottom: 20 },
 
-  demoBanner: {
-    flexDirection: 'row', alignItems: 'center', gap: 6,
-    backgroundColor: '#fef3c7', borderRadius: 10, padding: 10, marginBottom: 16,
-  },
-  demoTxt: { fontSize: 12, color: '#d97706', fontFamily: 'Inter_500Medium', flex: 1 },
 
   cardTitle: { fontSize: 24, fontWeight: '700', color: '#111827', fontFamily: 'Inter_700Bold', marginBottom: 6 },
   cardSub: { fontSize: 14, color: '#6b7280', fontFamily: 'Inter_400Regular', marginBottom: 24 },

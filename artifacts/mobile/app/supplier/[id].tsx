@@ -69,7 +69,7 @@ function AIScanModal({ visible, cert, onClose }: {
               <Ionicons name="scan" size={22} color="#ffffff" />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={[scan.title, { color: colors.foreground }]}>AFRIQ AI Certificate Analysis</Text>
+              <Text style={[scan.title, { color: colors.foreground }]}>Certificate Analysis</Text>
               <Text style={[scan.sub, { color: colors.mutedForeground }]}>{cert.name}</Text>
             </View>
             <TouchableOpacity onPress={onClose} style={scan.closeBtn}>
@@ -161,7 +161,7 @@ function AIScanModal({ visible, cert, onClose }: {
               {/* Verified badge */}
               <View style={[scan.verifiedBanner, { backgroundColor: colors.brandBg }]}>
                 <Ionicons name="shield-checkmark" size={18} color={colors.brand} />
-                <Text style={[scan.verifiedTxt, { color: colors.brand }]}>Verified by AFRIQ AI · {new Date().toLocaleDateString('en-GB')}</Text>
+              <Text style={[scan.verifiedTxt, { color: colors.brand }]}>Verification complete · {new Date().toLocaleDateString('en-GB')}</Text>
               </View>
             </Animated.View>
           )}
@@ -571,7 +571,7 @@ export default function SupplierScreen() {
               <View style={[styles.aiInfoBanner, { backgroundColor: colors.brandBg }]}>
                 <Ionicons name="sparkles" size={16} color={colors.brand} />
                 <Text style={[styles.aiInfoTxt, { color: colors.brand }]}>
-                  AFRIQ AI can scan and verify business certificates automatically. Tap "AI Scan" on any document to extract details.
+                    Certificates are scanned in the background to extract and verify business details. Tap "Scan Document" on any document to review the result.
                 </Text>
               </View>
 
@@ -642,7 +642,7 @@ export default function SupplierScreen() {
                         activeOpacity={0.85}
                       >
                         <Ionicons name="scan" size={16} color="#ffffff" />
-                        <Text style={styles.aiScanTxt}>AI Scan Document</Text>
+                        <Text style={styles.aiScanTxt}>Scan Document</Text>
                       </TouchableOpacity>
                     )}
                   </View>
