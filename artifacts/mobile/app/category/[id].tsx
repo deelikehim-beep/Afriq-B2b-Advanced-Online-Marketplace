@@ -118,7 +118,11 @@ export default function CategoryScreen() {
   const [sort, setSort] = useState<'relevance' | 'price' | 'rating'>('relevance');
   const [filtersVisible, setFiltersVisible] = useState(false);
   const category = CATEGORIES.find(c => c.id === id) ?? CATEGORIES[0];
-  const taxonomy = useMemo(() => getCategoryTaxonomy(id), [id]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(id === 'all' ? (CATEGORIES.find(item => item.id !== 'all')?.id ?? 'textiles') : id);
+  const [hasSelectedCategory, setHasSelectedCategory] = useState(id !== 'all');
+  const browseCategoryId = id === 'all' ? selectedCategoryId : id;
+  const taxonomy = useMemo(() => getCategoryTaxonomy(browseCategoryId), [browseCategoryId]);
+  const browseCategory = CATEGORIES.find(item => item.id === browseCategoryId) ?? category;
   const [selectedSubcategoryId, setSelectedSubcategoryId] = useState('');
   const [selectedTypeId, setSelectedTypeId] = useState('');
   const [selectedBrandId, setSelectedBrandId] = useState('');
@@ -150,7 +154,7 @@ export default function CategoryScreen() {
 
   const filtered = useMemo(() => {
     const result = PRODUCTS.filter(p => {
-      const categoryMatch = id === 'all' || p.category === id;
+       const categoryMatch = id === 'all' && !hasSelectedCategory ? true : p.category === browseCategoryId;
       const textMatch = !query || `${p.name} ${p.supplier} ${p.description}`.toLowerCase().includes(query.toLowerCase());
       const countryMatch = country === 'all' || (PRODUCT_COUNTRY[p.id] ?? p.country ?? 'NG') === country;
       const priceMatch = !maxPrice || p.price <= Number(maxPrice);
@@ -165,45 +169,61 @@ export default function CategoryScreen() {
       return categoryMatch && textMatch && countryMatch && priceMatch && ratingMatch && stockMatch && escrowMatch && brandMatch && modelMatch;
     });
     return result.sort((a, b) => sort === 'price' ? a.price - b.price : sort === 'rating' ? b.rating - a.rating : Number(b.featured) - Number(a.featured));
-  }, [id, query, country, maxPrice, rating, inStock, escrow, sort, activeBrand, activeModel]);
+  }, [id, hasSelectedCategory, browseCategoryId, query, country, maxPrice, rating, inStock, escrow, sort, activeBrand, activeModel]);
 
   const reset = () => { setCountry('all'); setMaxPrice(''); setRating(0); setInStock(false); setEscrow(false); };
 
-  return (
-    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
-      <StatusBar barStyle="dark-content" />
-      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><Ionicons name="arrow-back" size={22} color={colors.foreground} /></TouchableOpacity>
-        <View style={{ flex: 1 }}>
-          <Text style={[styles.title, { color: colors.foreground }]}>{category.name}</Text>
-          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>{filtered.length} wholesale listings · updated by AFRIQ AI</Text>
-        </View>
-        <TouchableOpacity onPress={() => router.push('/saved')} style={styles.headerIcon}><Ionicons name="bookmark-outline" size={21} color={colors.foreground} /></TouchableOpacity>
-      </View>
-
-      <View style={[styles.searchWrap, { backgroundColor: colors.card }]}>
-        <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
-          <Ionicons name="search-outline" size={17} color={colors.mutedForeground} />
-          <TextInput value={query} onChangeText={setQuery} placeholder={`Search ${category.name.toLowerCase()}…`} placeholderTextColor={colors.mutedForeground} style={[styles.searchInput, { color: colors.foreground }]} />
-        </View>
-        <TouchableOpacity onPress={() => setFiltersVisible(true)} style={[styles.filterBtn, { backgroundColor: colors.brand }]}>
-          <Ionicons name="options-outline" size={17} color="#ffffff" />
-          <Text style={styles.filterBtnTxt}>Filters</Text>
-        </TouchableOpacity>
-      </View>
-
-      {/* Jiji-inspired, always-visible catalog hierarchy */}
+  const catalogHeader = (
+    <>
       <View style={[styles.catalogExplorer, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
         <View style={styles.explorerTitleRow}>
           <View>
             <Text style={[styles.explorerEyebrow, { color: colors.brand }]}>Browse by catalog</Text>
-            <Text style={[styles.explorerTitle, { color: colors.foreground }]}>Subcategories</Text>
+            <Text style={[styles.explorerTitle, { color: colors.foreground }]}>{id === 'all' ? 'Categories' : 'Subcategories'}</Text>
           </View>
           <View style={[styles.depthBadge, { backgroundColor: colors.brandBg }]}>
             <Ionicons name="git-branch-outline" size={12} color={colors.brand} />
             <Text style={[styles.depthBadgeText, { color: colors.brand }]}>Category → type → brand → model</Text>
           </View>
         </View>
+
+        {id === 'all' && (
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subcategoryRow}>
+            {CATEGORIES.filter(item => item.id !== 'all').map(item => {
+              const active = item.id === browseCategoryId;
+              return (
+                <TouchableOpacity
+                  key={item.id}
+                  onPress={() => {
+                    setSelectedCategoryId(item.id);
+                    setHasSelectedCategory(true);
+                    setSelectedSubcategoryId('');
+                    setSelectedTypeId('');
+                    setSelectedBrandId('');
+                    setSelectedModelId('');
+                  }}
+                  style={[styles.subcategoryCard, { backgroundColor: active ? colors.brandBg : colors.background, borderColor: active ? colors.brand : colors.border }]}
+                >
+                  <View style={[styles.subcategoryIcon, { backgroundColor: active ? colors.brand : colors.card }]}>
+                    <Ionicons name={`${item.icon}-outline` as any} size={18} color={active ? '#ffffff' : colors.brand} />
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text numberOfLines={1} style={[styles.subcategoryName, { color: colors.foreground }]}>{item.name}</Text>
+                    <Text style={[styles.subcategoryCount, { color: colors.mutedForeground }]}>{item.count.toLocaleString()} listings</Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={14} color={active ? colors.brand : colors.mutedForeground} />
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        )}
+
+        {id === 'all' && (
+          <Text style={[styles.catalogSubheading, { color: colors.foreground }]}>
+            {browseCategory.name} subcategories
+          </Text>
+        )}
+
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subcategoryRow}>
           {taxonomy.subcategories.map(subcategory => {
             const active = activeSubcategory?.id === subcategory.id;
@@ -230,7 +250,7 @@ export default function CategoryScreen() {
           <View style={[styles.typePanel, { backgroundColor: colors.background, borderColor: colors.border }]}>
             <View style={styles.typePanelHeader}>
               <View>
-                <Text style={[styles.typePanelEyebrow, { color: colors.mutedForeground }]}>{category.name} / {activeSubcategory.name}</Text>
+                <Text style={[styles.typePanelEyebrow, { color: colors.mutedForeground }]}>{browseCategory.name} / {activeSubcategory.name}</Text>
                 <Text style={[styles.typePanelTitle, { color: colors.foreground }]}>Choose a type</Text>
               </View>
               <Text style={[styles.typePanelHint, { color: colors.brand }]}>{activeSubcategory.types.length} types</Text>
@@ -295,7 +315,7 @@ export default function CategoryScreen() {
             <View style={[styles.pathBar, { backgroundColor: colors.navyBg }]}>
               <Ionicons name="navigate-outline" size={14} color={colors.navy} />
               <Text numberOfLines={1} style={[styles.pathText, { color: colors.foreground }]}>
-                {category.name} / {activeSubcategory?.name} / {activeType.name} / {activeBrand?.name ?? 'All brands'}{activeModel ? ` / ${activeModel.name}` : ''}
+                {browseCategory.name} / {activeSubcategory?.name} / {activeType.name} / {activeBrand?.name ?? 'All brands'}{activeModel ? ` / ${activeModel.name}` : ''}
               </Text>
             </View>
           )}
@@ -312,12 +332,38 @@ export default function CategoryScreen() {
           ))}
         </ScrollView>
       </View>
+    </>
+  );
+
+  return (
+    <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
+      <StatusBar barStyle="dark-content" />
+      <View style={[styles.header, { backgroundColor: colors.card, borderBottomColor: colors.border }]}>
+        <TouchableOpacity onPress={() => router.back()} style={styles.backBtn}><Ionicons name="arrow-back" size={22} color={colors.foreground} /></TouchableOpacity>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.title, { color: colors.foreground }]}>{category.name}</Text>
+          <Text style={[styles.subtitle, { color: colors.mutedForeground }]}>{filtered.length} wholesale listings · updated by AFRIQ AI</Text>
+        </View>
+        <TouchableOpacity onPress={() => router.push('/saved')} style={styles.headerIcon}><Ionicons name="bookmark-outline" size={21} color={colors.foreground} /></TouchableOpacity>
+      </View>
+
+      <View style={[styles.searchWrap, { backgroundColor: colors.card }]}>
+        <View style={[styles.searchBar, { backgroundColor: colors.background, borderColor: colors.border }]}>
+          <Ionicons name="search-outline" size={17} color={colors.mutedForeground} />
+          <TextInput value={query} onChangeText={setQuery} placeholder={`Search ${category.name.toLowerCase()}…`} placeholderTextColor={colors.mutedForeground} style={[styles.searchInput, { color: colors.foreground }]} />
+        </View>
+        <TouchableOpacity onPress={() => setFiltersVisible(true)} style={[styles.filterBtn, { backgroundColor: colors.brand }]}>
+          <Ionicons name="options-outline" size={17} color="#ffffff" />
+          <Text style={styles.filterBtnTxt}>Filters</Text>
+        </TouchableOpacity>
+      </View>
 
       <FlatList
         data={filtered}
         numColumns={2}
         keyExtractor={p => p.id}
         columnWrapperStyle={styles.gridRow}
+        ListHeaderComponent={catalogHeader}
         contentContainerStyle={{ padding: 16, paddingBottom: insets.bottom + 40 }}
         showsVerticalScrollIndicator={false}
         ListEmptyComponent={<View style={styles.empty}><Ionicons name="search-outline" size={44} color={colors.mutedForeground} /><Text style={[styles.emptyTitle, { color: colors.foreground }]}>No matching goods</Text><Text style={[styles.emptySub, { color: colors.mutedForeground }]}>Try widening your filters or ask AFRIQ AI to find a supplier.</Text></View>}
@@ -349,6 +395,7 @@ const styles = StyleSheet.create({
   explorerTitleRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingHorizontal: 16, marginBottom: 9 },
   explorerEyebrow: { fontSize: 9, letterSpacing: 0.6, textTransform: 'uppercase', fontFamily: 'Inter_700Bold' },
   explorerTitle: { fontSize: 16, fontFamily: 'Inter_700Bold', marginTop: 2 },
+  catalogSubheading: { fontSize: 12, fontFamily: 'Inter_600SemiBold', paddingHorizontal: 16, marginBottom: 8 },
   depthBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 6, borderRadius: 9, maxWidth: 155 },
   depthBadgeText: { fontSize: 8, lineHeight: 11, fontFamily: 'Inter_600SemiBold' },
   subcategoryRow: { gap: 8, paddingHorizontal: 16, paddingBottom: 10 },

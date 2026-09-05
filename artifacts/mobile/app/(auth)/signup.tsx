@@ -3,7 +3,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import React, { useEffect, useRef, useState } from 'react';
 import {
-  Animated, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View,
+  Alert, Animated, Modal, Platform, ScrollView, StatusBar, StyleSheet, Text, TextInput, TouchableOpacity, View,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useAuth } from '@/contexts/AuthContext';
@@ -23,6 +23,7 @@ export default function Signup() {
   const [role, setRole] = useState<'buyer' | 'seller'>('buyer');
   const [businessName, setBusinessName] = useState('');
   const [storeLocation, setStoreLocation] = useState('');
+  const [storeAddress, setStoreAddress] = useState('');
 
   useEffect(() => {
     Animated.parallel([
@@ -37,12 +38,22 @@ export default function Signup() {
 
   const finishAuth = async (method: string) => {
     const selected = AFRICAN_COUNTRIES.find(item => item.code === country);
+    if (!country || country === 'all') {
+      Alert.alert('Country required', 'Choose your resident country so buyers and suppliers can see where you trade from.');
+      return;
+    }
+    if (role === 'seller' && !storeAddress.trim()) {
+      Alert.alert('Store address required', 'Seller profiles must include a complete store address before listing goods for sale.');
+      return;
+    }
     updateUserProfile({
       residentCountry: selected?.name ?? 'Nigeria',
       residentCountryCode: country,
       businessName: businessName.trim() || (role === 'seller' ? 'My AFRIQ Store' : 'My Trading Business'),
       businessType: role === 'seller' ? 'Retailer & Supplier' : 'Buyer & Distributor',
       storeLocation: storeLocation.trim() || selected?.name,
+      storeAddress: role === 'seller' ? storeAddress.trim() : undefined,
+      role,
       location: storeLocation.trim() || selected?.name || 'Africa',
     });
     await login(method);
@@ -94,6 +105,7 @@ export default function Signup() {
             </ScrollView>
             <TextInput value={businessName} onChangeText={setBusinessName} placeholder={role === 'seller' ? 'Store or company name' : 'Business name (optional)'} placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
             <TextInput value={storeLocation} onChangeText={setStoreLocation} placeholder="City, market or store location" placeholderTextColor="#9ca3af" style={styles.onboardingInput} />
+            {role === 'seller' && <TextInput value={storeAddress} onChangeText={setStoreAddress} placeholder="Complete store address (required for sellers)" placeholderTextColor="#9ca3af" style={styles.onboardingInput} />}
             <TouchableOpacity style={styles.continueBtn} onPress={() => finishAuth('demo')}><Text style={styles.continueTxt}>Enter AFRIQ marketplace</Text><Ionicons name="arrow-forward" size={17} color="#ffffff" /></TouchableOpacity>
           </View>
         </View>

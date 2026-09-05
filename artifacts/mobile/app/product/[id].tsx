@@ -120,7 +120,7 @@ export default function ProductDetail() {
 
   const product = PRODUCTS.find(p => p.id === id);
   const [selectedVariant, setSelectedVariant] = useState(product?.variants[0] ?? '');
-  const [qty, setQty] = useState(product?.moq ?? 1);
+  const [qty, setQty] = useState(product ? Math.min(product.stock, product.moq) : 1);
   const [galleryIdx, setGalleryIdx] = useState(0);
   const [lightboxIdx, setLightboxIdx] = useState<number | null>(null);
   const [videoModalVisible, setVideoModalVisible] = useState(false);
@@ -162,6 +162,10 @@ export default function ProductDetail() {
   };
 
   const handleAddToCart = () => {
+    if (qty > product.stock || product.stock < product.moq) {
+      Alert.alert('Stock limit reached', product.stock < product.moq ? 'This seller does not currently have enough stock to meet the minimum order.' : `Only ${product.stock.toLocaleString()} ${product.unit} are available.`);
+      return;
+    }
     addToCart(itemForCart);
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     Alert.alert('Added to cart ✓', `${qty} ${product.unit} of ${product.name}`, [
@@ -171,6 +175,10 @@ export default function ProductDetail() {
   };
 
   const handleOrderNow = () => {
+    if (qty > product.stock || product.stock < product.moq) {
+      Alert.alert('Stock limit reached', product.stock < product.moq ? 'This seller does not currently have enough stock to meet the minimum order.' : `Only ${product.stock.toLocaleString()} ${product.unit} are available.`);
+      return;
+    }
     addToCart(itemForCart);
     router.push('/cart');
   };
@@ -386,7 +394,7 @@ export default function ProductDetail() {
           <View style={styles.qtyRow}>
             <TouchableOpacity
               style={[styles.qtyBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
-              onPress={() => setQty(q => Math.max(product.moq, q - Math.ceil(product.moq / 5)))}
+                onPress={() => setQty(q => Math.max(product.moq, q - Math.ceil(product.moq / 5)))}
             >
               <Ionicons name="remove" size={20} color={colors.foreground} />
             </TouchableOpacity>
@@ -395,9 +403,10 @@ export default function ProductDetail() {
             </View>
             <TouchableOpacity
               style={[styles.qtyBtn, { backgroundColor: colors.background, borderColor: colors.border }]}
-              onPress={() => setQty(q => q + Math.ceil(product.moq / 5))}
+              onPress={() => setQty(q => Math.min(product.stock, q + Math.ceil(product.moq / 5)))}
+              disabled={qty >= product.stock}
             >
-              <Ionicons name="add" size={20} color={colors.foreground} />
+              <Ionicons name="add" size={20} color={qty >= product.stock ? colors.mutedForeground : colors.foreground} />
             </TouchableOpacity>
             <View style={[styles.totalBox, { backgroundColor: colors.brandBg }]}>
               <Text style={[styles.totalTxt, { color: colors.brand }]}>Total: {fmt(totalPrice)}</Text>

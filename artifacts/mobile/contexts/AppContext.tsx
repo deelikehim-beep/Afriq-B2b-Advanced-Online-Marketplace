@@ -4,7 +4,7 @@ import { DEMO_MODE, ESCROW_FEE_RATE } from '@/constants/config';
 import {
   DEMO_ORDERS, DEMO_CONVERSATIONS, DEMO_TRANSACTIONS, DEMO_NOTIFICATIONS, DEMO_USER,
   type CartItem, type Order, type Conversation, type Transaction, type Notif, type AppUser, type Product,
-  PRODUCT_LOGISTICS, calculateShippingFee,
+  PRODUCTS, PRODUCT_LOGISTICS, calculateShippingFee,
 } from '@/constants/data';
 
 interface AppContextType {
@@ -23,6 +23,7 @@ interface AppContextType {
   addToCart: (item: CartItem) => void;
   removeFromCart: (productId: string, variant: string) => void;
   updateCartQty: (productId: string, variant: string, qty: number) => void;
+  getProductStock: (productId: string) => number;
   saveItem: (item: CartItem) => void;
   removeSavedItem: (productId: string, variant: string) => void;
   moveSavedToCart: (item: CartItem) => void;
@@ -75,16 +76,20 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const cartTotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const unreadMessages = conversations.reduce((s, c) => s + c.unread, 0);
   const unreadNotifs = notifications.filter(n => !n.read).length;
+  const getProductStock = (productId: string) => PRODUCTS.find(product => product.id === productId)?.stock ?? 0;
 
   const addToCart = (item: CartItem) => {
+    const product = PRODUCTS.find(candidate => candidate.id === item.productId);
+    if (!product || product.stock <= 0) return;
+    const safeQty = Math.min(product.stock, Math.max(product.moq, item.qty));
     setCart(prev => {
       const existing = prev.find(c => c.productId === item.productId && c.variant === item.variant);
       if (existing) {
         return prev.map(c =>
-          c.productId === item.productId && c.variant === item.variant ? { ...c, qty: item.qty } : c
+          c.productId === item.productId && c.variant === item.variant ? { ...c, qty: safeQty } : c
         );
       }
-      return [...prev, item];
+      return [...prev, { ...item, qty: safeQty }];
     });
   };
 
@@ -93,8 +98,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateCartQty = (productId: string, variant: string, qty: number) => {
+    const product = PRODUCTS.find(candidate => candidate.id === productId);
+    if (!product) return;
+    const safeQty = Math.min(product.stock, Math.max(product.moq, qty));
     setCart(prev =>
-      prev.map(c => c.productId === productId && c.variant === variant ? { ...c, qty } : c)
+      prev.map(c => c.productId === productId && c.variant === variant ? { ...c, qty: safeQty } : c)
     );
   };
 
@@ -333,7 +341,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     <AppContext.Provider value={{
        user, cart, savedItems, followedSuppliers, orders, conversations, transactions, notifications,
       cartCount, cartTotal, unreadMessages, unreadNotifs,
-       addToCart, removeFromCart, updateCartQty, saveItem, removeSavedItem, moveSavedToCart, isSaved,
+        addToCart, removeFromCart, updateCartQty, getProductStock, saveItem, removeSavedItem, moveSavedToCart, isSaved,
        updateUserProfile, toggleFollowSupplier, startProductConversation, clearCart,
       placeOrder, confirmDelivery,
       sendMessage, markMessagesRead,

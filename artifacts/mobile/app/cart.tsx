@@ -15,7 +15,7 @@ export default function Cart() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { cart, cartTotal, removeFromCart, updateCartQty, saveItem, user } = useApp();
+  const { cart, cartTotal, removeFromCart, updateCartQty, getProductStock, saveItem, user } = useApp();
 
   const suppliers = [...new Set(cart.map(i => i.supplierId))];
   const escrowFee = Math.round(cartTotal * ESCROW_FEE_RATE);
@@ -101,12 +101,22 @@ export default function Cart() {
                   </TouchableOpacity>
                   <Text style={[styles.qtyTxt, { color: colors.foreground }]}>{item.qty}</Text>
                   <TouchableOpacity
-                    style={[styles.qtyBtn, { borderColor: colors.border, backgroundColor: colors.brand }]}
-                    onPress={() => updateCartQty(item.productId, item.variant, item.qty + Math.max(1, Math.ceil(item.moq / 5)))}
+                    style={[styles.qtyBtn, { borderColor: colors.border, backgroundColor: item.qty >= getProductStock(item.productId) ? colors.muted : colors.brand }]}
+                    onPress={() => {
+                      const step = Math.max(1, Math.ceil(item.moq / 5));
+                      const nextQty = Math.min(getProductStock(item.productId), item.qty + step);
+                      if (nextQty === item.qty && item.qty >= getProductStock(item.productId)) {
+                        Alert.alert('Maximum stock reached', `The seller only has ${getProductStock(item.productId).toLocaleString()} ${item.unit} available.`);
+                        return;
+                      }
+                      updateCartQty(item.productId, item.variant, nextQty);
+                    }}
+                    disabled={getProductStock(item.productId) <= 0}
                   >
-                    <Ionicons name="add" size={14} color="#ffffff" />
+                    <Ionicons name="add" size={14} color={item.qty >= getProductStock(item.productId) ? colors.mutedForeground : "#ffffff"} />
                   </TouchableOpacity>
                 </View>
+                <Text style={[styles.stockHint, { color: colors.mutedForeground }]}>Available: {getProductStock(item.productId).toLocaleString()} {item.unit}</Text>
               </View>
             </View>
             <TouchableOpacity style={styles.removeBtn} onPress={() => handleRemove(item)}>
@@ -184,6 +194,7 @@ const styles = StyleSheet.create({
   itemDeliveryTxt: { fontSize: 11, fontFamily: 'Inter_400Regular' },
   itemBottom: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
   itemPrice: { fontSize: 15, fontFamily: 'Inter_700Bold' },
+  stockHint: { fontSize: 10, fontFamily: 'Inter_400Regular', marginTop: 5 },
   qtyControl: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   qtyBtn: { width: 28, height: 28, borderRadius: 8, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
   qtyTxt: { fontSize: 14, fontFamily: 'Inter_600SemiBold', minWidth: 28, textAlign: 'center' },

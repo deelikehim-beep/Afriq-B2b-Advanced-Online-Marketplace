@@ -86,8 +86,9 @@ export default function Profile() {
               <Text style={styles.idType}>{user.businessType}</Text>
               <View style={styles.idLocation}>
                 <Ionicons name="location-outline" size={12} color="rgba(255,255,255,0.7)" />
-                <Text style={styles.idLocationTxt}>{user.location}</Text>
+                <Text style={styles.idLocationTxt}>{user.residentCountry ?? user.location}</Text>
               </View>
+              <Text style={styles.idAddress}>{user.storeAddress ? `Store: ${user.storeAddress}` : 'Store address not added yet'}</Text>
             </View>
           </View>
 
@@ -128,7 +129,7 @@ export default function Profile() {
         {/* Wallet summary */}
         <View style={[styles.walletSummary, { backgroundColor: colors.brandBg, borderColor: colors.brandLight }]}>
           <Ionicons name="wallet-outline" size={20} color={colors.brand} />
-          <View style={{ flex: 1 }}>
+               <View style={{ flex: 1 }}>
             <Text style={[styles.walletLabel, { color: colors.brand }]}>Wallet Balance</Text>
             <Text style={[styles.walletBal, { color: colors.brandDark }]}>{fmt(user.balance)}</Text>
           </View>
@@ -170,10 +171,10 @@ export default function Profile() {
                 if (s.id === 'support') Alert.alert('AFRIQ Support', 'Demo support desk: a trade specialist will respond within 4 hours.');
               }}
             >
-              <View style={[styles.menuIcon, { backgroundColor: colors.background }]}>
+               <View style={[styles.menuIcon, { backgroundColor: colors.background }]}>
                 <Ionicons name={s.icon as any} size={20} color={colors.foreground} />
               </View>
-              <View style={{ flex: 1 }}>
+               <View style={{ flex: 1 }}>
                 <Text style={[styles.menuLabel, { color: colors.foreground }]}>{s.label}</Text>
                 <Text style={[styles.menuDesc, { color: colors.mutedForeground }]}>{s.desc}</Text>
               </View>
@@ -206,6 +207,7 @@ export default function Profile() {
             </View>
             <ScrollView showsVerticalScrollIndicator={false}>
               {([
+                ['residentCountry', 'Resident country'],
                 ['businessName', 'Business / store name'],
                 ['businessType', 'Business type'],
                 ['storeLocation', 'Market / city location'],
@@ -214,12 +216,24 @@ export default function Profile() {
               ] as const).map(([key, label]) => (
                 <View key={key} style={styles.field}>
                   <Text style={[styles.fieldLabel, { color: colors.foreground }]}>{label}</Text>
-                  <TextInput value={draft[key]} onChangeText={value => setDraft(prev => ({ ...prev, [key]: value }))} placeholder={label} placeholderTextColor={colors.mutedForeground} style={[styles.fieldInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />
+                  <TextInput value={key === 'residentCountry' ? (user.residentCountry ?? '') : draft[key as keyof typeof draft]} onChangeText={value => key === 'residentCountry' ? updateUserProfile({ residentCountry: value }) : setDraft(prev => ({ ...prev, [key as keyof typeof draft]: value }))} placeholder={label} placeholderTextColor={colors.mutedForeground} style={[styles.fieldInput, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />
                 </View>
               ))}
               <Text style={[styles.fieldLabel, { color: colors.foreground }]}>About your company</Text>
               <TextInput value={draft.businessDescription} onChangeText={value => setDraft(prev => ({ ...prev, businessDescription: value }))} multiline placeholder="What do you sell and who do you serve?" placeholderTextColor={colors.mutedForeground} style={[styles.fieldInput, styles.textArea, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]} />
-              <TouchableOpacity style={[styles.saveProfileBtn, { backgroundColor: colors.brand }]} onPress={() => { updateUserProfile(draft); setEditVisible(false); Alert.alert('Profile updated', 'Your store details are now visible to buyers.'); }}>
+              <TouchableOpacity style={[styles.saveProfileBtn, { backgroundColor: colors.brand }]} onPress={() => {
+                if (user.role === 'seller' && !draft.storeAddress.trim()) {
+                  Alert.alert('Store address required', 'Seller profiles must have a complete store address before goods can be listed for sale.');
+                  return;
+                }
+                if (!user.residentCountry?.trim()) {
+                  Alert.alert('Country required', 'Add your resident country so it is visible on your public profile.');
+                  return;
+                }
+                updateUserProfile(draft);
+                setEditVisible(false);
+                Alert.alert('Profile updated', 'Your country and store details are now visible to other marketplace users.');
+              }}>
                 <Text style={styles.saveProfileTxt}>Save business details</Text>
               </TouchableOpacity>
             </ScrollView>
@@ -248,6 +262,7 @@ const styles = StyleSheet.create({
   idType: { fontSize: 12, color: 'rgba(255,255,255,0.65)', fontFamily: 'Inter_400Regular', marginTop: 1 },
   idLocation: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   idLocationTxt: { fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: 'Inter_400Regular' },
+  idAddress: { fontSize: 10, color: 'rgba(255,255,255,0.58)', fontFamily: 'Inter_400Regular', marginTop: 3 },
 
   trustRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: 12 },
   trustLeft: {},

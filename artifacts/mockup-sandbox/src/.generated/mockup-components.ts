@@ -2,8 +2,8 @@
 type ModuleMap = Record<string, () => Promise<Record<string, unknown>>>;
 export const modules: ModuleMap = {
   "./components/mockups/templates/MinimalistMarketingLandingPage-lc7Wlu/Redshift.tsx": () => import("../components/mockups/templates/MinimalistMarketingLandingPage-lc7Wlu/Redshift.tsx"),
-  "./components/mockups/templates/MissionControlBentoDashboard-SYk2Vt/Dashboard.tsx": () => import("../components/mockups/templates/MissionControlBentoDashboard-SYk2Vt/Dashboard.tsx"),
   "./components/mockups/templates/MissionControlBentoDashboard-_67rkh/Dashboard.tsx": () => import("../components/mockups/templates/MissionControlBentoDashboard-_67rkh/Dashboard.tsx"),
+  "./components/mockups/templates/MissionControlBentoDashboard-SYk2Vt/Dashboard.tsx": () => import("../components/mockups/templates/MissionControlBentoDashboard-SYk2Vt/Dashboard.tsx"),
   "./components/mockups/templates/MissionControlBentoDashboard-pU4CFJ/Dashboard.tsx": () => import("../components/mockups/templates/MissionControlBentoDashboard-pU4CFJ/Dashboard.tsx"),
   "./components/mockups/templates/OrangePortraitEventPoster-7yyr4t/DeepOrangePoster.tsx": () => import("../components/mockups/templates/OrangePortraitEventPoster-7yyr4t/DeepOrangePoster.tsx"),
   "./components/mockups/templates/PortraitDrivenAgencyLanding-_amvkJ/Solene.tsx": () => import("../components/mockups/templates/PortraitDrivenAgencyLanding-_amvkJ/Solene.tsx"),

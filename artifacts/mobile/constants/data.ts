@@ -102,9 +102,11 @@ export interface SupplierProfile {
   id: string;
   name: string;
   initials: string;
+  avatarImage?: string;
   coverImage: string;
   description: string;
   location: string;
+  storeAddress?: string;
   country: string;
   countryCode: string;
   countryFlag: string;
@@ -243,6 +245,8 @@ export interface AppUser {
   totalDeals: number;
   successRate: number;
   avatar: string;
+  avatarImage?: string;
+  role?: 'buyer' | 'seller';
   bankName: string;
   accountNumber: string;
   residentCountry?: string;
@@ -347,6 +351,7 @@ export const DEMO_USER: AppUser = {
   totalDeals: 147,
   successRate: 98,
   avatar: 'CO',
+  role: 'buyer',
   bankName: 'GTBank',
   accountNumber: '0123456789',
   residentCountry: 'Nigeria',

@@ -225,6 +225,7 @@ export default function SupplierScreen() {
     coverImage: firstProduct.image,
     description: `${firstProduct.supplier} is a verified B2B supplier on AFRIQ, specialising in ${firstProduct.category} products. Based in ${firstProduct.location}.`,
     location: firstProduct.location,
+    storeAddress: firstProduct.location,
     country: 'Nigeria',
     countryCode: 'NG',
     countryFlag: '🇳🇬',
@@ -258,6 +259,7 @@ export default function SupplierScreen() {
     overallRating: firstProduct.rating,
     totalReviews: firstProduct.reviews,
   };
+  const publicStoreAddress = s.storeAddress ?? s.certificates.find(cert => cert.aiExtracted?.address)?.aiExtracted?.address ?? s.location;
 
   const TABS: { key: Tab; label: string; icon: string }[] = [
     { key: 'overview', label: 'Overview', icon: 'business-outline' },
@@ -299,7 +301,7 @@ export default function SupplierScreen() {
           {/* Avatar overlapping cover */}
           <View style={[styles.avatarWrap, { backgroundColor: colors.card }]}>
             <View style={[styles.avatar, { backgroundColor: colors.brandBg }]}>
-              <Text style={[styles.avatarTxt, { color: colors.brand }]}>{s.initials}</Text>
+              <Image source={{ uri: s.avatarImage ?? s.coverImage }} style={styles.avatarImage} contentFit="cover" />
             </View>
           </View>
         </View>
@@ -328,6 +330,10 @@ export default function SupplierScreen() {
                 <Text style={styles.countryFlag}>{s.countryFlag}</Text>
                 <Ionicons name="location-outline" size={12} color={colors.mutedForeground} />
                 <Text style={[styles.locationTxt, { color: colors.mutedForeground }]}>{s.location}</Text>
+              </View>
+              <View style={styles.locationRow}>
+                <Ionicons name="storefront-outline" size={12} color={colors.mutedForeground} />
+                <Text numberOfLines={2} style={[styles.locationTxt, { color: colors.mutedForeground }]}>Store address: {publicStoreAddress}</Text>
               </View>
             </View>
           </View>
@@ -395,6 +401,13 @@ export default function SupplierScreen() {
               <View style={[styles.section, { backgroundColor: colors.card }]}>
                 <Text style={[styles.sectionTitle, { color: colors.foreground }]}>About this Company</Text>
                 <Text style={[styles.bodyTxt, { color: colors.textSecondary }]}>{s.description}</Text>
+                <View style={[styles.publicAddress, { backgroundColor: colors.brandBg }]}>
+                  <Ionicons name="storefront-outline" size={16} color={colors.brand} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={[styles.publicAddressLabel, { color: colors.brand }]}>Public store address</Text>
+                    <Text style={[styles.publicAddressValue, { color: colors.foreground }]}>{publicStoreAddress}</Text>
+                  </View>
+                </View>
                 <View style={[styles.divider, { backgroundColor: colors.border }]} />
                 <View style={styles.infoGrid}>
                   {[
@@ -688,6 +701,7 @@ const styles = StyleSheet.create({
   iconBtn: { width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(0,0,0,0.4)', justifyContent: 'center', alignItems: 'center' },
   avatarWrap: { position: 'absolute', bottom: -36, left: 20, borderRadius: 44, padding: 4, elevation: 4, boxShadow: '0 2px 8px rgba(0,0,0,0.15)' } as any,
   avatar: { width: 72, height: 72, borderRadius: 36, justifyContent: 'center', alignItems: 'center' },
+  avatarImage: { width: 72, height: 72, borderRadius: 36 },
   avatarTxt: { fontSize: 26, fontWeight: '800', fontFamily: 'Inter_700Bold' },
 
   // Identity card
@@ -700,6 +714,9 @@ const styles = StyleSheet.create({
   locationRow: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 4 },
   countryFlag: { fontSize: 14 },
   locationTxt: { fontSize: 12, fontFamily: 'Inter_400Regular' },
+  publicAddress: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, padding: 10, borderRadius: 10, marginTop: 12 },
+  publicAddressLabel: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  publicAddressValue: { fontSize: 12, lineHeight: 17, fontFamily: 'Inter_500Medium', marginTop: 2 },
   followBtn: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 9, paddingVertical: 5, borderRadius: 10, borderWidth: 1, marginTop: 8 },
   followBtnTxt: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
   chipRow: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginTop: 12 },
