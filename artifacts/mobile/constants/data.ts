@@ -271,6 +271,13 @@ export interface AppUser {
   storeAddress?: string;
   website?: string;
   businessDescription?: string;
+  registrationNumber?: string;
+  taxId?: string;
+  industry?: string;
+  contactName?: string;
+  contactPhone?: string;
+  employeeCount?: string;
+  setupComplete?: boolean;
 }
 
 export const hasCompleteSellerProfile = (
@@ -379,6 +386,13 @@ export const DEMO_USER: AppUser = {
   storeAddress: '12 Martins Street, Lagos Island, Lagos',
   website: 'www.okafortrading.com',
   businessDescription: 'Importer and distributor serving independent retailers across West Africa.',
+  registrationNumber: 'RC 1087234',
+  taxId: '',
+  industry: 'Import & distribution',
+  contactName: 'Chinedu Okafor',
+  contactPhone: '+234 803 456 7890',
+  employeeCount: '11–50',
+  setupComplete: true,
 };
 
 export const LIVE_USER: AppUser = {
@@ -406,6 +420,13 @@ export const LIVE_USER: AppUser = {
   storeAddress: '',
   website: '',
   businessDescription: '',
+  registrationNumber: '',
+  taxId: '',
+  industry: '',
+  contactName: '',
+  contactPhone: '',
+  employeeCount: '',
+  setupComplete: false,
 };
 
 // ─── Categories ──────────────────────────────────────────────

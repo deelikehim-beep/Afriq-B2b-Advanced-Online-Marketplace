@@ -23,5 +23,6 @@ export const auth = betterAuth({
     "http://localhost:8081",
     "http://localhost:18115",
     ...(process.env.REPLIT_DEV_DOMAIN ? [`https://${process.env.REPLIT_DEV_DOMAIN}`] : []),
+    ...(process.env.REPLIT_EXPO_DEV_DOMAIN ? [`https://${process.env.REPLIT_EXPO_DEV_DOMAIN}`] : []),
   ],
 });

@@ -157,7 +157,7 @@ export default function Profile() {
             <Text style={[styles.quickValue, { color: colors.foreground }]}>Suite</Text>
             <Text style={[styles.quickLabel, { color: colors.mutedForeground }]}>Merchant tools</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.quickLink} onPress={() => setEditVisible(true)}>
+          <TouchableOpacity style={styles.quickLink} onPress={() => router.push('/account-setup?edit=1')}>
             <View style={[styles.quickIcon, { backgroundColor: colors.brandBg }]}><Ionicons name="create-outline" size={18} color={colors.brand} /></View>
             <Text style={[styles.quickValue, { color: colors.foreground }]}>Edit</Text>
             <Text style={[styles.quickLabel, { color: colors.mutedForeground }]}>Business profile</Text>
@@ -172,7 +172,7 @@ export default function Profile() {
               style={[styles.menuItem, i < SETTINGS.length - 1 && { borderBottomWidth: 1, borderBottomColor: colors.border }]}
               activeOpacity={0.7}
               onPress={() => {
-                if (s.id === 'business') setEditVisible(true);
+                if (s.id === 'business') router.push('/account-setup?edit=1');
                 if (s.id === 'support') Alert.alert('AFRIQ Support', 'A trade specialist will respond within 4 hours.');
               }}
             >
