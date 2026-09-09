@@ -25,12 +25,13 @@ export default function Profile() {
   const router = useRouter();
   const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
-  const { user, orders, transactions, savedItems, updateUserProfile } = useApp();
+  const { user, orders, transactions, savedItems, updateUserProfile, marketplaceProducts } = useApp();
   const { logout } = useAuth();
 
   const completedOrders = orders.filter(o => o.status === 'completed').length;
   const totalSpent = transactions.filter(t => t.type === 'escrow_lock').reduce((s, t) => s + t.amount, 0);
   const [editVisible, setEditVisible] = useState(false);
+  const [visitorVisible, setVisitorVisible] = useState(false);
   const [draft, setDraft] = useState({
     businessName: user.businessName,
     businessType: user.businessType,
@@ -96,6 +97,11 @@ export default function Profile() {
               <Text style={styles.idAddress}>{user.storeAddress ? `Store: ${user.storeAddress}` : 'Store address not added yet'}</Text>
             </View>
           </View>
+
+          <TouchableOpacity style={styles.viewAsButton} onPress={() => setVisitorVisible(true)} activeOpacity={0.85}>
+            <Ionicons name="eye-outline" size={16} color="#ffffff" />
+            <Text style={styles.viewAsText}>View as visitor</Text>
+          </TouchableOpacity>
 
           {/* Trust score */}
           <View style={styles.trustRow}>
@@ -163,6 +169,19 @@ export default function Profile() {
             <Text style={[styles.quickLabel, { color: colors.mutedForeground }]}>Business profile</Text>
           </TouchableOpacity>
         </View>
+
+        <TouchableOpacity
+          style={[styles.listGoodsCta, { backgroundColor: colors.brandDeep }]}
+          onPress={() => router.push('/list-product')}
+          activeOpacity={0.86}
+        >
+          <View style={styles.listGoodsIcon}><Ionicons name="add-circle-outline" size={22} color="#ffffff" /></View>
+          <View style={{ flex: 1 }}>
+            <Text style={styles.listGoodsTitle}>Put goods up for sale</Text>
+            <Text style={styles.listGoodsSub}>Publish a listing buyers can discover in the marketplace.</Text>
+          </View>
+          <Ionicons name="arrow-forward" size={18} color="#fbbf24" />
+        </TouchableOpacity>
 
         {/* Settings menu */}
         <View style={[styles.menuCard, { backgroundColor: colors.card }]}>
@@ -245,6 +264,63 @@ export default function Profile() {
           </View>
         </View>
       </Modal>
+
+      <Modal visible={visitorVisible} transparent animationType="slide" onRequestClose={() => setVisitorVisible(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={[styles.visitorSheet, { backgroundColor: colors.background }]}>
+            <View style={styles.sheetHandle} />
+            <View style={styles.visitorHeader}>
+              <View>
+                <Text style={[styles.visitorEyebrow, { color: colors.brand }]}>PUBLIC PREVIEW</Text>
+                <Text style={[styles.visitorTitle, { color: colors.foreground }]}>How visitors see you</Text>
+              </View>
+              <TouchableOpacity onPress={() => setVisitorVisible(false)} style={styles.closeButton}>
+                <Ionicons name="close" size={21} color={colors.foreground} />
+              </TouchableOpacity>
+            </View>
+
+            <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingBottom: insets.bottom + 18 }}>
+              <View style={[styles.publicCard, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                <View style={[styles.publicAvatar, { backgroundColor: '#f59e0b' }]}>
+                  <Text style={styles.avatarLetter}>{user.avatar || user.businessName.slice(0, 2).toUpperCase()}</Text>
+                </View>
+                <Text style={[styles.publicName, { color: colors.foreground }]}>{user.businessName || 'Your company name'}</Text>
+                <Text style={[styles.publicType, { color: colors.mutedForeground }]}>{user.businessType || 'Wholesale business'}</Text>
+                <View style={styles.publicMetaRow}>
+                  <View style={[styles.publicMeta, { backgroundColor: colors.brandBg }]}><Ionicons name="location-outline" size={13} color={colors.brand} /><Text style={[styles.publicMetaText, { color: colors.brandDark }]}>{user.residentCountry || 'Country not added'}</Text></View>
+                  {user.storeLocation ? <View style={[styles.publicMeta, { backgroundColor: colors.navyBg }]}><Ionicons name="navigate-outline" size={13} color={colors.navy} /><Text style={[styles.publicMetaText, { color: colors.navy }]}>{user.storeLocation}</Text></View> : null}
+                </View>
+                <Text style={[styles.publicAddress, { color: colors.mutedForeground }]}>{user.storeAddress || 'Full business address not added yet'}</Text>
+                {user.businessDescription ? <Text style={[styles.publicDescription, { color: colors.foreground }]}>{user.businessDescription}</Text> : null}
+                <View style={[styles.publicStats, { borderTopColor: colors.border }]}>
+                  <View><Text style={[styles.publicStatValue, { color: colors.foreground }]}>{user.trustScore || 0}</Text><Text style={[styles.publicStatLabel, { color: colors.mutedForeground }]}>Trust score</Text></View>
+                  <View><Text style={[styles.publicStatValue, { color: colors.foreground }]}>{user.totalDeals || 0}</Text><Text style={[styles.publicStatLabel, { color: colors.mutedForeground }]}>Deals</Text></View>
+                  <View><Text style={[styles.publicStatValue, { color: colors.foreground }]}>{user.successRate || 0}%</Text><Text style={[styles.publicStatLabel, { color: colors.mutedForeground }]}>Success rate</Text></View>
+                </View>
+              </View>
+
+              <View style={styles.publicGoodsHeader}>
+                <Text style={[styles.publicGoodsTitle, { color: colors.foreground }]}>Published goods</Text>
+                <Text style={[styles.publicGoodsCount, { color: colors.mutedForeground }]}>{marketplaceProducts.filter(product => product.supplierId === user.id).length}</Text>
+              </View>
+              {marketplaceProducts.filter(product => product.supplierId === user.id).map(product => (
+                <TouchableOpacity key={product.id} onPress={() => { setVisitorVisible(false); router.push(`/product/${product.id}`); }} style={[styles.publicProduct, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <View style={[styles.publicProductImage, { backgroundColor: colors.background }]}><Text style={styles.publicProductEmoji}>📦</Text></View>
+                  <View style={{ flex: 1 }}><Text numberOfLines={1} style={[styles.publicProductName, { color: colors.foreground }]}>{product.name}</Text><Text style={[styles.publicProductPrice, { color: colors.brand }]}>{fmt(product.price)} / {product.unit}</Text><Text style={[styles.publicProductMeta, { color: colors.mutedForeground }]}>MOQ {product.moq} · {product.stock.toLocaleString()} in stock</Text></View>
+                  <Ionicons name="chevron-forward" size={16} color={colors.mutedForeground} />
+                </TouchableOpacity>
+              ))}
+              {marketplaceProducts.filter(product => product.supplierId === user.id).length === 0 && (
+                <View style={[styles.publicEmpty, { backgroundColor: colors.card, borderColor: colors.border }]}>
+                  <Ionicons name="storefront-outline" size={27} color={colors.mutedForeground} />
+                  <Text style={[styles.publicEmptyTitle, { color: colors.foreground }]}>No published goods yet</Text>
+                  <Text style={[styles.publicEmptyText, { color: colors.mutedForeground }]}>Publish your first wholesale listing and it will appear here.</Text>
+                </View>
+              )}
+            </ScrollView>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -268,6 +344,8 @@ const styles = StyleSheet.create({
   idLocation: { flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 },
   idLocationTxt: { fontSize: 12, color: 'rgba(255,255,255,0.7)', fontFamily: 'Inter_400Regular' },
   idAddress: { fontSize: 10, color: 'rgba(255,255,255,0.58)', fontFamily: 'Inter_400Regular', marginTop: 3 },
+  viewAsButton: { alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 6, borderRadius: 18, borderWidth: 1, borderColor: 'rgba(255,255,255,0.34)', backgroundColor: 'rgba(255,255,255,0.12)', paddingHorizontal: 11, paddingVertical: 7, marginBottom: 14 },
+  viewAsText: { color: '#ffffff', fontSize: 11, fontFamily: 'Inter_600SemiBold' },
 
   trustRow: { flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: 'rgba(255,255,255,0.12)', borderRadius: 12, padding: 12 },
   trustLeft: {},
@@ -306,9 +384,42 @@ const styles = StyleSheet.create({
   quickIcon: { width: 36, height: 36, borderRadius: 11, justifyContent: 'center', alignItems: 'center' },
   quickValue: { fontSize: 13, fontFamily: 'Inter_700Bold' },
   quickLabel: { fontSize: 10, fontFamily: 'Inter_400Regular', textAlign: 'center' },
+  listGoodsCta: { marginHorizontal: 16, marginTop: 12, borderRadius: 15, padding: 14, flexDirection: 'row', alignItems: 'center', gap: 11 },
+  listGoodsIcon: { width: 38, height: 38, borderRadius: 12, backgroundColor: 'rgba(255,255,255,0.14)', alignItems: 'center', justifyContent: 'center' },
+  listGoodsTitle: { color: '#ffffff', fontSize: 13, fontFamily: 'Inter_700Bold' },
+  listGoodsSub: { color: 'rgba(255,255,255,0.68)', fontSize: 10, lineHeight: 14, marginTop: 2, fontFamily: 'Inter_400Regular' },
   modalOverlay: { flex: 1, justifyContent: 'flex-end', backgroundColor: 'rgba(0,0,0,0.45)' },
   editSheet: { maxHeight: '88%', borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 18 },
+  visitorSheet: { maxHeight: '92%', borderTopLeftRadius: 24, borderTopRightRadius: 24, paddingHorizontal: 18, paddingTop: 10 },
   sheetHandle: { width: 42, height: 4, borderRadius: 2, backgroundColor: '#d1d5db', alignSelf: 'center', marginBottom: 14 },
+  visitorHeader: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 15 },
+  visitorEyebrow: { fontSize: 10, letterSpacing: 1, fontFamily: 'Inter_700Bold' },
+  visitorTitle: { fontSize: 20, marginTop: 3, fontFamily: 'Inter_700Bold' },
+  closeButton: { width: 34, height: 34, borderRadius: 17, backgroundColor: '#f3f4f6', alignItems: 'center', justifyContent: 'center' },
+  publicCard: { borderRadius: 17, borderWidth: 1, padding: 17, alignItems: 'center' },
+  publicAvatar: { width: 58, height: 58, borderRadius: 29, alignItems: 'center', justifyContent: 'center', marginBottom: 9 },
+  publicName: { fontSize: 18, fontFamily: 'Inter_700Bold' },
+  publicType: { fontSize: 12, marginTop: 3, fontFamily: 'Inter_400Regular' },
+  publicMetaRow: { flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 7, marginTop: 12 },
+  publicMeta: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 15, paddingHorizontal: 9, paddingVertical: 6 },
+  publicMetaText: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  publicAddress: { textAlign: 'center', fontSize: 11, lineHeight: 16, marginTop: 10, maxWidth: 290, fontFamily: 'Inter_400Regular' },
+  publicDescription: { textAlign: 'center', fontSize: 11, lineHeight: 16, marginTop: 10, maxWidth: 300, fontFamily: 'Inter_400Regular' },
+  publicStats: { width: '100%', flexDirection: 'row', justifyContent: 'space-around', borderTopWidth: 1, marginTop: 14, paddingTop: 13 },
+  publicStatValue: { textAlign: 'center', fontSize: 14, fontFamily: 'Inter_700Bold' },
+  publicStatLabel: { textAlign: 'center', fontSize: 9, marginTop: 3, fontFamily: 'Inter_400Regular' },
+  publicGoodsHeader: { flexDirection: 'row', alignItems: 'center', gap: 7, marginTop: 18, marginBottom: 9 },
+  publicGoodsTitle: { fontSize: 15, fontFamily: 'Inter_700Bold' },
+  publicGoodsCount: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  publicProduct: { borderRadius: 13, borderWidth: 1, padding: 10, flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 8 },
+  publicProductImage: { width: 52, height: 52, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  publicProductEmoji: { fontSize: 24 },
+  publicProductName: { fontSize: 12, fontFamily: 'Inter_700Bold' },
+  publicProductPrice: { fontSize: 11, marginTop: 3, fontFamily: 'Inter_700Bold' },
+  publicProductMeta: { fontSize: 9, marginTop: 3, fontFamily: 'Inter_400Regular' },
+  publicEmpty: { borderRadius: 14, borderWidth: 1, padding: 20, alignItems: 'center' },
+  publicEmptyTitle: { fontSize: 13, marginTop: 8, fontFamily: 'Inter_700Bold' },
+  publicEmptyText: { textAlign: 'center', fontSize: 11, lineHeight: 16, marginTop: 4, fontFamily: 'Inter_400Regular' },
   editHeader: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 },
   editTitle: { fontSize: 19, fontFamily: 'Inter_700Bold' },
   editSub: { fontSize: 11, fontFamily: 'Inter_400Regular', marginTop: 3 },

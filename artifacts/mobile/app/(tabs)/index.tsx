@@ -45,14 +45,14 @@ const TRENDING_SEARCHES = [
 ];
 
 // live count from actual data for selected category
-const catLiveCount = (catId: string) =>
-  catId === 'all' ? PRODUCTS.length : PRODUCTS.filter(p => p.category === catId).length;
+const catLiveCount = (catId: string, products: Product[]) =>
+  catId === 'all' ? products.length : products.filter(p => p.category === catId).length;
 
 export default function Marketplace() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { cartCount, unreadNotifs, user } = useApp();
+  const { cartCount, unreadNotifs, user, marketplaceProducts } = useApp();
   const { width, height } = useWindowDimensions();
 
   const isLandscape = width > height;
@@ -62,7 +62,7 @@ export default function Marketplace() {
   const [search, setSearch] = useState('');
   const [searchFocused, setSearchFocused] = useState(false);
   const [category, setCategory] = useState('all');
-  const [countryFilter, setCountryFilter] = useState(user.residentCountryCode ?? 'all');
+  const [countryFilter, setCountryFilter] = useState(user.residentCountryCode || 'all');
   const [bannerIdx, setBannerIdx] = useState(0);
   const bannerRef = useRef<FlatList>(null);
 
@@ -76,7 +76,8 @@ export default function Marketplace() {
     return () => clearInterval(t);
   }, [bannerIdx]);
 
-  const filtered = PRODUCTS.filter(p => {
+  const browseProducts = [...marketplaceProducts, ...PRODUCTS.filter(product => !marketplaceProducts.some(item => item.id === product.id))];
+  const filtered = browseProducts.filter(p => {
     const matchCat = category === 'all' || p.category === category;
     const matchQ = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.supplier.toLowerCase().includes(search.toLowerCase());
     const matchCountry = countryFilter === 'all' || (p.country ?? 'NG') === countryFilter;
@@ -88,7 +89,7 @@ export default function Marketplace() {
   });
 
   // Social proof (deterministic per product)
-  const viewsToday = (p: Product) => 20 + ((parseInt(p.id) * 13) % 60);
+  const viewsToday = (p: Product) => 20 + ((p.id.length * 13) % 60);
 
   const header = (
     <>
@@ -185,6 +186,19 @@ export default function Marketplace() {
         </ScrollView>
       </View>
 
+      <TouchableOpacity
+        style={[styles.sellCta, { backgroundColor: colors.brandBg, borderColor: colors.brandLight }]}
+        onPress={() => router.push('/list-product')}
+        activeOpacity={0.84}
+      >
+        <View style={[styles.sellCtaIcon, { backgroundColor: colors.brand }]}><Ionicons name="add" size={22} color="#ffffff" /></View>
+        <View style={{ flex: 1 }}>
+          <Text style={[styles.sellCtaTitle, { color: colors.foreground }]}>Put your goods up for sale</Text>
+          <Text style={[styles.sellCtaSub, { color: colors.mutedForeground }]}>Reach buyers across Africa with a public wholesale listing.</Text>
+        </View>
+        <Ionicons name="chevron-forward" size={18} color={colors.brand} />
+      </TouchableOpacity>
+
       {/* ── Category Explorer ── */}
       <View style={[styles.catSection, { backgroundColor: colors.card }]}>
           <View style={styles.catSectionHeader}>
@@ -198,7 +212,7 @@ export default function Marketplace() {
           {CATEGORIES.map(cat => {
             const meta = CATEGORY_META[cat.id] ?? { gradient: ['#059669', '#047857'] as [string,string], emoji: '📦' };
             const active = category === cat.id;
-            const liveCount = catLiveCount(cat.id);
+            const liveCount = catLiveCount(cat.id, browseProducts);
             return (
               <TouchableOpacity
                 key={cat.id}
@@ -448,6 +462,10 @@ const styles = StyleSheet.create({
   countryPill: { flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 11, paddingVertical: 6, borderRadius: 20, borderWidth: 1 },
   countryFlag: { fontSize: 14 },
   countryName: { fontSize: 12, fontFamily: 'Inter_500Medium' },
+  sellCta: { marginHorizontal: 16, marginTop: 2, marginBottom: 4, borderRadius: 14, borderWidth: 1, padding: 11, flexDirection: 'row', alignItems: 'center', gap: 10 },
+  sellCtaIcon: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  sellCtaTitle: { fontSize: 13, fontFamily: 'Inter_700Bold' },
+  sellCtaSub: { fontSize: 10, lineHeight: 14, marginTop: 2, fontFamily: 'Inter_400Regular' },
 
   // Category tiles
   catSection: { paddingBottom: 14 },

@@ -17,7 +17,8 @@ const { width } = Dimensions.get('window');
 // ─── AI-derived price intelligence ───────────────────────────
 function useAIPriceInsight(price: number, id: string) {
   const offsets = [0.08, -0.12, 0.05, -0.08, 0.12, -0.05, 0.15, -0.10, 0.06, -0.14];
-  const offset = offsets[parseInt(id) % offsets.length];
+  const numericId = Number.parseInt(id.replace(/\D/g, ''), 10) || id.length;
+  const offset = offsets[numericId % offsets.length];
   const marketAvg = Math.round(price * (1 + offset));
   const pctDiff = Math.round(((price - marketAvg) / marketAvg) * 100);
   const isGoodDeal = pctDiff < 0;
@@ -116,9 +117,9 @@ export default function ProductDetail() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { addToCart, cartCount, saveItem, isSaved, startProductConversation } = useApp();
+  const { addToCart, cartCount, saveItem, isSaved, startProductConversation, marketplaceProducts } = useApp();
 
-  const product = PRODUCTS.find(p => p.id === id);
+  const product = [...marketplaceProducts, ...PRODUCTS].find(p => p.id === id);
   const [selectedVariant, setSelectedVariant] = useState(product?.variants[0] ?? '');
   const [qty, setQty] = useState(product ? Math.min(product.stock, product.moq) : 1);
   const [galleryIdx, setGalleryIdx] = useState(0);
@@ -137,15 +138,16 @@ export default function ProductDetail() {
     );
   }
 
-  const galleryData = PRODUCT_GALLERY[product.id]?.images ?? [product.image];
+  const galleryData = product.images ?? PRODUCT_GALLERY[product.id]?.images ?? [product.image];
   const hasVideo = !!(PRODUCT_GALLERY[product.id]?.videoUrl);
   // All slides: real images + optional VIDEO slide
   const allSlides: string[] = hasVideo ? [...galleryData, 'VIDEO'] : galleryData;
 
   const ai = useAIPriceInsight(product.price, product.id);
   const aiReview = getAIReviewSummary(product.rating, product.category);
-  const viewsToday = 20 + ((parseInt(product.id) * 13) % 60);
-  const ordersWeek = Math.max(3, Math.floor(product.sold * 0.018) + (parseInt(product.id) % 8));
+  const numericProductId = Number.parseInt(product.id.replace(/\D/g, ''), 10) || product.id.length;
+  const viewsToday = 20 + ((numericProductId * 13) % 60);
+  const ordersWeek = Math.max(3, Math.floor(product.sold * 0.018) + (numericProductId % 8));
 
   const currentPrice = () => {
     const tier = [...product.bulkPricing].reverse().find(t => qty >= t.qty);

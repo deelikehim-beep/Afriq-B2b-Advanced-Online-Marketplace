@@ -19,6 +19,7 @@ interface AppContextType {
   transactions: Transaction[];
   notifications: Notif[];
   listedProducts: Product[];
+  marketplaceProducts: Product[];
   cartCount: number;
   cartTotal: number;
   unreadMessages: number;
@@ -32,7 +33,7 @@ interface AppContextType {
   moveSavedToCart: (item: CartItem) => void;
   isSaved: (productId: string, variant?: string) => boolean;
   updateUserProfile: (updates: Partial<AppUser>) => void;
-  createProductListing: (draft: ProductListingDraft) => { ok: boolean; error?: string; product?: Product };
+  createProductListing: (draft: ProductListingDraft) => Promise<{ ok: boolean; error?: string; product?: Product }>;
   toggleFollowSupplier: (supplierId: string) => void;
   startProductConversation: (product: Product) => string;
   clearCart: () => void;
@@ -60,6 +61,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [transactions, setTransactions] = useState<Transaction[]>([]);
   const [notifications, setNotifications] = useState<Notif[]>([]);
   const [listedProducts, setListedProducts] = useState<Product[]>([]);
+  const [marketplaceProducts, setMarketplaceProducts] = useState<Product[]>([]);
   const [hydrated, setHydrated] = useState(false);
 
   useEffect(() => {
@@ -99,6 +101,19 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [isLoggedIn, getToken, authUser]);
 
   useEffect(() => {
+    let cancelled = false;
+    const loadMarketplaceListings = async () => {
+      const domain = process.env.EXPO_PUBLIC_DOMAIN;
+      const response = await fetch(`${domain ? `https://${domain}` : ''}/api/marketplace/listings`);
+      if (!response.ok || cancelled) return;
+      const payload = await response.json() as { listings?: Product[] };
+      if (!cancelled) setMarketplaceProducts(payload.listings ?? []);
+    };
+    loadMarketplaceListings().catch(() => {});
+    return () => { cancelled = true; };
+  }, [isLoggedIn]);
+
+  useEffect(() => {
     if (!isLoggedIn || !hydrated) return;
     const timer = setTimeout(async () => {
       const token = await getToken();
@@ -119,10 +134,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const cartTotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const unreadMessages = conversations.reduce((s, c) => s + c.unread, 0);
   const unreadNotifs = notifications.filter(n => !n.read).length;
-  const getProductStock = (productId: string) => [...listedProducts, ...PRODUCTS].find(product => product.id === productId)?.stock ?? 0;
+  const allMarketplaceProducts = [...marketplaceProducts, ...listedProducts, ...PRODUCTS];
+  const getProductStock = (productId: string) => allMarketplaceProducts.find(product => product.id === productId)?.stock ?? 0;
 
   const addToCart = (item: CartItem) => {
-    const product = [...listedProducts, ...PRODUCTS].find(candidate => candidate.id === item.productId);
+    const product = allMarketplaceProducts.find(candidate => candidate.id === item.productId);
     if (!product || product.stock <= 0) return;
     const safeQty = Math.min(product.stock, Math.max(product.moq, item.qty));
     setCart(prev => {
@@ -141,7 +157,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   };
 
   const updateCartQty = (productId: string, variant: string, qty: number) => {
-    const product = [...listedProducts, ...PRODUCTS].find(candidate => candidate.id === productId);
+    const product = allMarketplaceProducts.find(candidate => candidate.id === productId);
     if (!product) return;
     const safeQty = Math.min(product.stock, Math.max(product.moq, qty));
     setCart(prev =>
@@ -171,7 +187,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser(prev => ({ ...prev, ...updates }));
   };
 
-  const createProductListing = (draft: ProductListingDraft) => {
+  const createProductListing = async (draft: ProductListingDraft) => {
     if (user.role !== 'seller') {
       return { ok: false, error: 'Only seller accounts can publish goods. Update your account role before listing.' };
     }
@@ -201,7 +217,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     }
 
     const product: Product = {
-      id: `seller_${Date.now()}`,
+      id: `seller_${user.id}_${Date.now()}`,
       name: draft.name.trim(),
       category: draft.category,
       price: draft.price,
@@ -225,7 +241,22 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       escrow: draft.escrow,
       bulkPricing: [],
     };
+    const token = await getToken();
+    const domain = process.env.EXPO_PUBLIC_DOMAIN;
+    const response = await fetch(`${domain ? `https://${domain}` : ''}/api/marketplace/listings`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      },
+      body: JSON.stringify({ product }),
+    });
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { message?: string } | null;
+      return { ok: false, error: payload?.message ?? 'The listing could not be published. Please try again.' };
+    }
     setListedProducts(prev => [product, ...prev]);
+    setMarketplaceProducts(prev => [product, ...prev.filter(item => item.id !== product.id)]);
     return { ok: true, product };
   };
 
@@ -421,7 +452,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   return (
     <AppContext.Provider value={{
-       user, cart, savedItems, followedSuppliers, orders, conversations, transactions, notifications, listedProducts,
+       user, cart, savedItems, followedSuppliers, orders, conversations, transactions, notifications, listedProducts, marketplaceProducts,
       cartCount, cartTotal, unreadMessages, unreadNotifs,
         addToCart, removeFromCart, updateCartQty, getProductStock, saveItem, removeSavedItem, moveSavedToCart, isSaved,
        updateUserProfile, createProductListing, toggleFollowSupplier, startProductConversation, clearCart,

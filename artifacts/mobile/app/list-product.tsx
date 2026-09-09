@@ -84,6 +84,7 @@ export default function ListProduct() {
   const [escrow, setEscrow] = useState(true);
   const [images, setImages] = useState<string[]>(DEFAULT_IMAGES);
   const [imageUrl, setImageUrl] = useState('');
+  const [submitting, setSubmitting] = useState(false);
 
   const taxonomy = useMemo(() => getCategoryTaxonomy(categoryId), [categoryId]);
   const activeSubcategory = taxonomy.subcategories.find(item => item.id === subcategoryId) ?? taxonomy.subcategories[0];
@@ -120,7 +121,8 @@ export default function ListProduct() {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
+    if (submitting) return;
     if (user.role !== 'seller') {
       Alert.alert('Seller account required', 'Only seller accounts can publish goods on AFRIQ.');
       return;
@@ -154,14 +156,19 @@ export default function ListProduct() {
       delivery,
       escrow,
     };
-    const result = createProductListing(draft);
-    if (!result.ok) {
-      Alert.alert('Listing needs attention', result.error ?? 'Review the listing details and try again.');
-      return;
+    setSubmitting(true);
+    try {
+      const result = await createProductListing(draft);
+      if (!result.ok) {
+        Alert.alert('Listing needs attention', result.error ?? 'Review the listing details and try again.');
+        return;
+      }
+      Alert.alert('Product listed', 'Your good is now published and searchable on the AFRIQ marketplace.', [
+        { text: 'Done', onPress: () => router.back() },
+      ]);
+    } finally {
+      setSubmitting(false);
     }
-    Alert.alert('Product listed', 'Your good is now ready to appear on the AFRIQ marketplace.', [
-      { text: 'Done', onPress: () => router.back() },
-    ]);
   };
 
   return (
@@ -314,9 +321,9 @@ export default function ListProduct() {
           <Text style={styles.previewLocation}>{user.storeLocation || user.location}</Text>
         </View>
 
-        <TouchableOpacity style={[styles.submitButton, { backgroundColor: colors.brand }]} onPress={handleSubmit} activeOpacity={0.85}>
-          <Ionicons name="checkmark-circle-outline" size={21} color="#ffffff" />
-          <Text style={styles.submitText}>{user.role === 'seller' ? 'Submit listing for review' : 'Seller account required'}</Text>
+        <TouchableOpacity disabled={submitting} style={[styles.submitButton, { backgroundColor: colors.brand, opacity: submitting ? 0.65 : 1 }]} onPress={handleSubmit} activeOpacity={0.85}>
+          <Ionicons name={submitting ? 'time-outline' : 'checkmark-circle-outline'} size={21} color="#ffffff" />
+          <Text style={styles.submitText}>{submitting ? 'Publishing…' : user.role === 'seller' ? 'Publish product' : 'Seller account required'}</Text>
         </TouchableOpacity>
         <Text style={[styles.submitHint, { color: colors.mutedForeground }]}>
           {user.role === 'seller' && profileComplete

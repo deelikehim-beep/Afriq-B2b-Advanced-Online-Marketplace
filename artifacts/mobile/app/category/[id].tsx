@@ -8,6 +8,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
+import { useApp } from '@/contexts/AppContext';
 import {
   AFRICAN_COUNTRIES, CATEGORIES, PRODUCTS, PRODUCT_COUNTRY, fmt,
   getCategoryTaxonomy, type CategoryBrand, type CategorySubcategory,
@@ -19,6 +20,9 @@ const CATEGORY_COLORS: Record<string, string> = {
   beauty: '#db2777', home: '#ea580c', auto: '#475569', food: '#d97706',
   health: '#0d9488', office: '#4f46e5', machinery: '#374151', sports: '#dc2626',
 };
+
+const catLiveCount = (catId: string, products: Product[]) =>
+  catId === 'all' ? products.length : products.filter(product => product.category === catId).length;
 
 function FilterSheet({
   visible, onClose, country, setCountry, maxPrice, setMaxPrice, rating, setRating,
@@ -109,6 +113,7 @@ export default function CategoryScreen() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
+  const { marketplaceProducts } = useApp();
   const [query, setQuery] = useState('');
   const [country, setCountry] = useState('all');
   const [maxPrice, setMaxPrice] = useState('');
@@ -152,8 +157,9 @@ export default function CategoryScreen() {
     setSelectedModelId('');
   };
 
+  const catalogProducts = [...marketplaceProducts, ...PRODUCTS.filter(product => !marketplaceProducts.some(item => item.id === product.id))];
   const filtered = useMemo(() => {
-    const result = PRODUCTS.filter(p => {
+    const result = catalogProducts.filter(p => {
        const categoryMatch = id === 'all' && !hasSelectedCategory ? true : p.category === browseCategoryId;
       const textMatch = !query || `${p.name} ${p.supplier} ${p.description}`.toLowerCase().includes(query.toLowerCase());
       const countryMatch = country === 'all' || (PRODUCT_COUNTRY[p.id] ?? p.country ?? 'NG') === country;
@@ -169,7 +175,7 @@ export default function CategoryScreen() {
       return categoryMatch && textMatch && countryMatch && priceMatch && ratingMatch && stockMatch && escrowMatch && brandMatch && modelMatch;
     });
     return result.sort((a, b) => sort === 'price' ? a.price - b.price : sort === 'rating' ? b.rating - a.rating : Number(b.featured) - Number(a.featured));
-  }, [id, hasSelectedCategory, browseCategoryId, query, country, maxPrice, rating, inStock, escrow, sort, activeBrand, activeModel]);
+  }, [catalogProducts, id, hasSelectedCategory, browseCategoryId, query, country, maxPrice, rating, inStock, escrow, sort, activeBrand, activeModel]);
 
   const reset = () => { setCountry('all'); setMaxPrice(''); setRating(0); setInStock(false); setEscrow(false); };
 
@@ -188,7 +194,7 @@ export default function CategoryScreen() {
         </View>
 
         {id === 'all' && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.subcategoryRow}>
+          <View style={styles.categoryDirectory}>
             {CATEGORIES.filter(item => item.id !== 'all').map(item => {
               const active = item.id === browseCategoryId;
               return (
@@ -202,20 +208,17 @@ export default function CategoryScreen() {
                     setSelectedBrandId('');
                     setSelectedModelId('');
                   }}
-                  style={[styles.subcategoryCard, { backgroundColor: active ? colors.brandBg : colors.background, borderColor: active ? colors.brand : colors.border }]}
+                  style={[styles.categoryDirectoryItem, { backgroundColor: active ? colors.brandBg : colors.background, borderColor: active ? colors.brand : colors.border }]}
                 >
-                  <View style={[styles.subcategoryIcon, { backgroundColor: active ? colors.brand : colors.card }]}>
+                  <View style={[styles.categoryDirectoryIcon, { backgroundColor: active ? colors.brand : colors.card }]}>
                     <Ionicons name={`${item.icon}-outline` as any} size={18} color={active ? '#ffffff' : colors.brand} />
                   </View>
-                  <View style={{ flex: 1 }}>
-                    <Text numberOfLines={1} style={[styles.subcategoryName, { color: colors.foreground }]}>{item.name}</Text>
-                    <Text style={[styles.subcategoryCount, { color: colors.mutedForeground }]}>{item.count.toLocaleString()} listings</Text>
-                  </View>
-                  <Ionicons name="chevron-forward" size={14} color={active ? colors.brand : colors.mutedForeground} />
+                  <Text numberOfLines={2} style={[styles.categoryDirectoryName, { color: colors.foreground }]}>{item.name}</Text>
+                  <Text style={[styles.categoryDirectoryCount, { color: colors.mutedForeground }]}>{catLiveCount(item.id, catalogProducts)} goods</Text>
                 </TouchableOpacity>
               );
             })}
-          </ScrollView>
+          </View>
         )}
 
         {id === 'all' && (
@@ -398,6 +401,11 @@ const styles = StyleSheet.create({
   catalogSubheading: { fontSize: 12, fontFamily: 'Inter_600SemiBold', paddingHorizontal: 16, marginBottom: 8 },
   depthBadge: { flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 7, paddingVertical: 6, borderRadius: 9, maxWidth: 155 },
   depthBadgeText: { fontSize: 8, lineHeight: 11, fontFamily: 'Inter_600SemiBold' },
+  categoryDirectory: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, paddingHorizontal: 16, paddingBottom: 12 },
+  categoryDirectoryItem: { width: '30.5%', minHeight: 98, borderRadius: 13, borderWidth: 1, alignItems: 'center', justifyContent: 'center', paddingHorizontal: 6, paddingVertical: 8 },
+  categoryDirectoryIcon: { width: 38, height: 38, borderRadius: 11, alignItems: 'center', justifyContent: 'center', marginBottom: 6 },
+  categoryDirectoryName: { fontSize: 10, lineHeight: 13, fontFamily: 'Inter_700Bold', textAlign: 'center' },
+  categoryDirectoryCount: { fontSize: 8, marginTop: 3, fontFamily: 'Inter_400Regular' },
   subcategoryRow: { gap: 8, paddingHorizontal: 16, paddingBottom: 10 },
   subcategoryCard: { width: 192, minHeight: 62, borderRadius: 12, borderWidth: 1, padding: 8, flexDirection: 'row', alignItems: 'center', gap: 8 },
   subcategoryIcon: { width: 38, height: 38, borderRadius: 10, justifyContent: 'center', alignItems: 'center' },
