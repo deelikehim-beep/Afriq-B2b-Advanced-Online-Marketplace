@@ -212,8 +212,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     if (draft.stock < draft.moq) {
       return { ok: false, error: 'Stock cannot be lower than the MOQ, just like cart quantity limits.' };
     }
-    if (draft.variants.length === 0 || draft.images.length === 0 || !draft.delivery.trim()) {
-      return { ok: false, error: 'Add at least one variant, one product image, and delivery details.' };
+    if (draft.images.length === 0) {
+      return { ok: false, error: 'Add at least one product image before publishing.' };
     }
 
     const product: Product = {
@@ -230,27 +230,40 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       supplierDeals: user.totalDeals,
       location: user.storeLocation?.trim() || user.location,
       country: user.residentCountryCode,
+      brand: draft.brand.trim(),
+      brandId: draft.brandId,
+      model: draft.model.trim(),
+      modelId: draft.modelId,
       image: draft.images[0],
       images: draft.images,
       rating: 0,
       reviews: 0,
       sold: 0,
-      description: `${draft.brand.trim()} ${draft.model.trim()} · ${draft.type.trim()} · ${draft.subcategory.trim()}`,
-      variants: draft.variants,
-      delivery: draft.delivery.trim(),
+      description: `${draft.brand.trim()} ${draft.model.trim()} · ${draft.type.trim()} · ${draft.subcategory.trim()}${draft.condition ? ` · ${draft.condition}` : ''}`,
+      specifications: draft.specifications,
+      condition: draft.condition,
+      problems: draft.problems,
+      problemDescription: draft.problemDescription,
+      variants: draft.variants.length > 0 ? draft.variants : ['Standard'],
+      delivery: draft.delivery.trim() || 'Delivery arranged with seller',
       escrow: draft.escrow,
       bulkPricing: [],
     };
     const token = await getToken();
     const domain = process.env.EXPO_PUBLIC_DOMAIN;
-    const response = await fetch(`${domain ? `https://${domain}` : ''}/api/marketplace/listings`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        ...(token ? { Authorization: `Bearer ${token}` } : {}),
-      },
-      body: JSON.stringify({ product }),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${domain ? `https://${domain}` : ''}/api/marketplace/listings`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ product }),
+      });
+    } catch {
+      return { ok: false, error: 'The marketplace could not be reached. Check your connection and try again.' };
+    }
     if (!response.ok) {
       const payload = await response.json().catch(() => null) as { message?: string } | null;
       return { ok: false, error: payload?.message ?? 'The listing could not be published. Please try again.' };

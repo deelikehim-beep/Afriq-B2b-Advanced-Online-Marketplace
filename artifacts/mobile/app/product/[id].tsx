@@ -570,6 +570,65 @@ export default function ProductDetail() {
           <Text style={[styles.sectionLabel, { color: colors.foreground }]}>About this Product</Text>
           <Text style={[styles.description, { color: colors.textSecondary }]}>{product.description}</Text>
 
+           {/* Structured product information */}
+           {(product.specifications?.length || product.condition || product.problems) && (
+             <View style={[styles.productInfoCard, { backgroundColor: colors.background, borderColor: colors.border }]}>
+               <View style={styles.productInfoHeader}>
+                 <View style={[styles.productInfoIcon, { backgroundColor: colors.brandBg }]}>
+                   <Ionicons name="list-outline" size={16} color={colors.brand} />
+                 </View>
+                 <View style={{ flex: 1 }}>
+                   <Text style={[styles.productInfoTitle, { color: colors.foreground }]}>Product information</Text>
+                   <Text style={[styles.productInfoHint, { color: colors.mutedForeground }]}>Details provided by the seller</Text>
+                 </View>
+               </View>
+               <View style={styles.specGrid}>
+                 {product.brand && (
+                   <View style={styles.specItem}>
+                     <Text style={[styles.specLabel, { color: colors.mutedForeground }]}>Brand</Text>
+                     <Text style={[styles.specValue, { color: colors.foreground }]}>{product.brand}</Text>
+                   </View>
+                 )}
+                 {product.model && (
+                   <View style={styles.specItem}>
+                     <Text style={[styles.specLabel, { color: colors.mutedForeground }]}>Model</Text>
+                     <Text style={[styles.specValue, { color: colors.foreground }]}>{product.model}</Text>
+                   </View>
+                 )}
+                 {product.condition && (
+                   <View style={styles.specItem}>
+                     <Text style={[styles.specLabel, { color: colors.mutedForeground }]}>Condition</Text>
+                     <Text style={[styles.specValue, { color: colors.foreground }]}>{product.condition}</Text>
+                   </View>
+                 )}
+                 {product.specifications?.map(specification => (
+                   <View key={specification.label} style={styles.specItem}>
+                     <Text style={[styles.specLabel, { color: colors.mutedForeground }]}>{specification.label}</Text>
+                     <Text style={[styles.specValue, { color: colors.foreground }]}>{specification.value}</Text>
+                   </View>
+                 ))}
+               </View>
+               <View style={[styles.problemsBox, { backgroundColor: product.problems?.length ? '#fff7ed' : colors.brandBg }]}>
+                 <Ionicons
+                   name={product.problems?.length ? 'alert-circle-outline' : 'checkmark-circle-outline'}
+                   size={16}
+                   color={product.problems?.length ? '#c2410c' : colors.brand}
+                 />
+                 <View style={{ flex: 1 }}>
+                   <Text style={[styles.problemTitle, { color: product.problems?.length ? '#9a3412' : colors.brand }]}>
+                     {product.problems?.length ? 'Known problems' : 'Problems'}
+                   </Text>
+                   <Text style={[styles.problemText, { color: product.problems?.length ? '#9a3412' : colors.brandDark }]}>
+                     {product.problems?.length ? product.problems.join(' · ') : 'None reported by seller'}
+                   </Text>
+                   {!!product.problemDescription && (
+                     <Text style={[styles.problemDescription, { color: '#9a3412' }]}>{product.problemDescription}</Text>
+                   )}
+                 </View>
+               </View>
+             </View>
+           )}
+
           {/* Stock indicator */}
           <View style={[styles.stockRow, { borderColor: colors.border }]}>
             <View style={styles.stockLeft}>
@@ -752,6 +811,19 @@ const styles = StyleSheet.create({
 
   // Description & stock
   description: { fontSize: 13, fontFamily: 'Inter_400Regular', lineHeight: 21, marginBottom: 16 },
+  productInfoCard: { borderRadius: 14, borderWidth: 1, padding: 13, marginBottom: 18 },
+  productInfoHeader: { flexDirection: 'row', alignItems: 'center', gap: 9, marginBottom: 12 },
+  productInfoIcon: { width: 34, height: 34, borderRadius: 10, alignItems: 'center', justifyContent: 'center' },
+  productInfoTitle: { fontSize: 14, fontFamily: 'Inter_700Bold' },
+  productInfoHint: { fontSize: 10, marginTop: 2, fontFamily: 'Inter_400Regular' },
+  specGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 11 },
+  specItem: { width: '47%', borderRadius: 9, padding: 9, backgroundColor: 'rgba(148,163,184,0.10)' },
+  specLabel: { fontSize: 10, marginBottom: 4, fontFamily: 'Inter_500Medium' },
+  specValue: { fontSize: 12, lineHeight: 16, fontFamily: 'Inter_700Bold' },
+  problemsBox: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderRadius: 10, padding: 10 },
+  problemTitle: { fontSize: 11, fontFamily: 'Inter_700Bold', marginBottom: 3 },
+  problemText: { fontSize: 11, lineHeight: 16, fontFamily: 'Inter_500Medium' },
+  problemDescription: { fontSize: 11, lineHeight: 16, marginTop: 4, fontFamily: 'Inter_400Regular' },
   stockRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', borderTopWidth: 1, paddingTop: 12 },
   stockLeft: { flexDirection: 'row', alignItems: 'center', gap: 6 },
   stockTxt: { fontSize: 13, fontFamily: 'Inter_600SemiBold' },

@@ -20,9 +20,13 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useApp } from '@/contexts/AppContext';
 import {
   CATEGORIES,
+  getCommonProductProblems,
   getCategoryTaxonomy,
+  getProductAttributeFields,
+  getSellerTips,
   hasCompleteSellerProfile,
   type ProductListingDraft,
+  type ProductSpecification,
 } from '@/constants/data';
 import { useColors } from '@/hooks/useColors';
 
@@ -37,16 +41,20 @@ function ChoiceChips({
   selected,
   onSelect,
   colors,
+  multiSelect,
 }: {
   items: { id: string; name: string }[];
   selected: string;
   onSelect: (id: string) => void;
   colors: ReturnType<typeof useColors>;
+  multiSelect?: string[];
 }) {
   return (
     <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.chipRow}>
       {items.map(item => {
-        const active = item.id === selected;
+        const active = multiSelect
+          ? item.id === 'None' ? multiSelect.length === 0 : multiSelect.includes(item.id)
+          : item.id === selected;
         return (
           <TouchableOpacity
             key={item.id}
@@ -73,8 +81,8 @@ export default function ListProduct() {
   const [subcategoryId, setSubcategoryId] = useState('');
   const [typeId, setTypeId] = useState('');
   const [name, setName] = useState('');
-  const [brand, setBrand] = useState('');
-  const [model, setModel] = useState('');
+  const [brandId, setBrandId] = useState('');
+  const [modelId, setModelId] = useState('');
   const [price, setPrice] = useState('');
   const [moq, setMoq] = useState('');
   const [unit, setUnit] = useState('units');
@@ -84,11 +92,20 @@ export default function ListProduct() {
   const [escrow, setEscrow] = useState(true);
   const [images, setImages] = useState<string[]>(DEFAULT_IMAGES);
   const [imageUrl, setImageUrl] = useState('');
+  const [specificationValues, setSpecificationValues] = useState<Record<string, string>>({});
+  const [condition, setCondition] = useState('New');
+  const [problems, setProblems] = useState<string[]>([]);
+  const [problemDescription, setProblemDescription] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   const taxonomy = useMemo(() => getCategoryTaxonomy(categoryId), [categoryId]);
   const activeSubcategory = taxonomy.subcategories.find(item => item.id === subcategoryId) ?? taxonomy.subcategories[0];
   const activeType = activeSubcategory?.types.find(item => item.id === typeId) ?? activeSubcategory?.types[0];
+  const activeBrand = activeType?.brands.find(item => item.id === brandId) ?? activeType?.brands[0];
+  const activeModel = activeBrand?.models.find(item => item.id === modelId) ?? activeBrand?.models[0];
+  const attributeFields = getProductAttributeFields(categoryId, activeType?.id ?? '');
+  const commonProblems = getCommonProductProblems(categoryId, activeType?.id ?? '');
+  const sellerTips = getSellerTips(categoryId, activeType?.id ?? '');
   const profileComplete = hasCompleteSellerProfile(user);
   const categoryName = CATEGORIES.find(item => item.id === categoryId)?.name ?? categoryId;
 
@@ -96,11 +113,41 @@ export default function ListProduct() {
     setCategoryId(id);
     setSubcategoryId('');
     setTypeId('');
+    setBrandId('');
+    setModelId('');
   };
 
   const selectSubcategory = (id: string) => {
     setSubcategoryId(id);
     setTypeId('');
+    setBrandId('');
+    setModelId('');
+  };
+
+  const selectType = (id: string) => {
+    setTypeId(id);
+    setBrandId('');
+    setModelId('');
+  };
+
+  const selectBrand = (id: string) => {
+    setBrandId(id);
+    setModelId('');
+  };
+
+  const updateSpecification = (key: string, value: string) => {
+    setSpecificationValues(prev => ({ ...prev, [key]: value }));
+  };
+
+  const toggleProblem = (problem: string) => {
+    if (problem === 'None') {
+      setProblems([]);
+      setProblemDescription('');
+      return;
+    }
+    setProblems(prev => prev.includes(problem)
+      ? prev.filter(item => item !== problem)
+      : [...prev.filter(item => item !== 'None'), problem]);
   };
 
   const addImageUrl = () => {
@@ -140,21 +187,32 @@ export default function ListProduct() {
     }
 
     const selectedVariants = variants.split(',').map(value => value.trim()).filter(Boolean);
+    const specifications: ProductSpecification[] = attributeFields
+      .map(field => ({ label: field.label, value: specificationValues[field.key]?.trim() ?? '' }))
+      .filter(specification => specification.value.length > 0);
+    const selectedBrand = activeBrand?.name ?? 'Unbranded';
+    const selectedModel = activeModel?.name ?? 'Model not listed';
     const draft: ProductListingDraft = {
       name,
       category: categoryId,
       subcategory: activeSubcategory?.name ?? '',
       type: activeType?.name ?? '',
-      brand,
-      model,
+      brandId: activeBrand?.id ?? '',
+      brand: selectedBrand,
+      modelId: activeModel?.id ?? '',
+      model: selectedModel,
       price: parseNumber(price),
       moq: parseNumber(moq),
       unit,
       stock: parseNumber(stock),
-      variants: selectedVariants,
+      variants: selectedVariants.length > 0 ? selectedVariants : ['Standard'],
       images,
-      delivery,
+      delivery: delivery.trim() || 'Delivery arranged with seller',
       escrow,
+      specifications,
+      condition,
+      problems,
+      problemDescription: problemDescription.trim(),
     };
     setSubmitting(true);
     try {
@@ -166,6 +224,11 @@ export default function ListProduct() {
       Alert.alert('Product listed', 'Your good is now published and searchable on the AFRIQ marketplace.', [
         { text: 'Done', onPress: () => router.back() },
       ]);
+    } catch (error) {
+      Alert.alert(
+        'Could not publish',
+        error instanceof Error ? error.message : 'The marketplace could not be reached. Check your connection and try again.',
+      );
     } finally {
       setSubmitting(false);
     }
@@ -224,16 +287,65 @@ export default function ListProduct() {
           <Text style={[styles.label, { color: colors.foreground }]}>Subcategory</Text>
           <ChoiceChips items={taxonomy.subcategories} selected={activeSubcategory?.id ?? ''} onSelect={selectSubcategory} colors={colors} />
           <Text style={[styles.label, { color: colors.foreground }]}>Product type</Text>
-          <ChoiceChips items={activeSubcategory?.types ?? []} selected={activeType?.id ?? ''} onSelect={setTypeId} colors={colors} />
-          <View style={styles.twoColumns}>
-            <View style={styles.column}>
-              <Field label="Brand" value={brand} onChangeText={setBrand} placeholder="Brand name" colors={colors} />
-            </View>
-            <View style={styles.column}>
-              <Field label="Model / grade" value={model} onChangeText={setModel} placeholder="Model or grade" colors={colors} />
-            </View>
-          </View>
+           <ChoiceChips items={activeSubcategory?.types ?? []} selected={activeType?.id ?? ''} onSelect={selectType} colors={colors} />
+           <Text style={[styles.label, { color: colors.foreground }]}>Brand from catalog</Text>
+           <ChoiceChips items={activeType?.brands ?? []} selected={activeBrand?.id ?? ''} onSelect={selectBrand} colors={colors} />
+           <Text style={[styles.label, { color: colors.foreground }]}>Model from catalog</Text>
+           <ChoiceChips items={activeBrand?.models ?? []} selected={activeModel?.id ?? ''} onSelect={setModelId} colors={colors} />
+           <Text style={[styles.catalogNote, { color: colors.mutedForeground }]}>
+             These models are saved in AFRIQ's catalog even when no seller has stock yet. Buyers can find the model as soon as you publish it.
+           </Text>
+           <TipCard text={sellerTips[0]} colors={colors} />
         </View>
+
+         <View style={[styles.section, { backgroundColor: colors.card }]}>
+           <View style={styles.sectionTitleRow}>
+             <View style={[styles.sectionIcon, { backgroundColor: colors.navyBg }]}>
+               <Ionicons name="options-outline" size={18} color={colors.navy} />
+             </View>
+             <View>
+               <Text style={[styles.sectionTitle, { color: colors.foreground }]}>Product information</Text>
+               <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>Give buyers the details specific to this product</Text>
+             </View>
+           </View>
+           <Text style={[styles.label, { color: colors.foreground }]}>Condition</Text>
+           <ChoiceChips
+             items={[{ id: 'New', name: 'New' }, { id: 'Used', name: 'Used' }, { id: 'Refurbished', name: 'Refurbished' }, { id: 'Open box', name: 'Open box' }]}
+             selected={condition}
+             onSelect={setCondition}
+             colors={colors}
+           />
+           {attributeFields.map(field => (
+             <Field
+               key={field.key}
+               label={field.label}
+               value={specificationValues[field.key] ?? ''}
+               onChangeText={value => updateSpecification(field.key, value)}
+               placeholder={field.placeholder}
+               colors={colors}
+             />
+           ))}
+           <Text style={[styles.label, { color: colors.foreground }]}>Known problems</Text>
+           <Text style={[styles.fieldHint, { color: colors.mutedForeground }]}>Choose None if you have checked the product and found no problem.</Text>
+           <ChoiceChips
+             items={[{ id: 'None', name: 'None' }, ...commonProblems.map(problem => ({ id: problem, name: problem }))]}
+             selected={problems.length === 0 ? 'None' : ''}
+             onSelect={toggleProblem}
+             colors={colors}
+             multiSelect={problems}
+           />
+           {problems.length > 0 && (
+             <Field
+               label="Describe the problem(s)"
+               value={problemDescription}
+               onChangeText={setProblemDescription}
+               placeholder="Explain what is affected, how serious it is, and what the buyer should know"
+               colors={colors}
+               multiline
+             />
+           )}
+           <TipCard text={sellerTips[2]} colors={colors} />
+         </View>
 
         <View style={[styles.section, { backgroundColor: colors.card }]}>
           <View style={styles.sectionTitleRow}>
@@ -255,6 +367,7 @@ export default function ListProduct() {
           </View>
           <Field label="Variants (comma separated)" value={variants} onChangeText={setVariants} placeholder="Blue / Gold, Red / Green" colors={colors} />
           <Field label="Delivery details" value={delivery} onChangeText={setDelivery} placeholder="e.g. 3–5 days across Lagos" colors={colors} />
+           <TipCard text={sellerTips[1]} colors={colors} />
           <View style={styles.switchRow}>
             <View style={{ flex: 1 }}>
               <Text style={[styles.switchTitle, { color: colors.foreground }]}>Eligible for escrow</Text>
@@ -342,6 +455,7 @@ function Field({
   placeholder,
   colors,
   keyboardType = 'default',
+  multiline = false,
 }: {
   label: string;
   value: string;
@@ -349,6 +463,7 @@ function Field({
   placeholder: string;
   colors: ReturnType<typeof useColors>;
   keyboardType?: 'default' | 'numeric';
+  multiline?: boolean;
 }) {
   return (
     <View style={styles.field}>
@@ -358,9 +473,25 @@ function Field({
         onChangeText={onChangeText}
         placeholder={placeholder}
         placeholderTextColor={colors.mutedForeground}
-        style={[styles.input, { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background }]}
+        style={[
+          styles.input,
+          multiline && styles.multilineInput,
+          { color: colors.foreground, borderColor: colors.border, backgroundColor: colors.background },
+        ]}
         keyboardType={keyboardType}
+        multiline={multiline}
+        textAlignVertical={multiline ? 'top' : 'center'}
       />
+    </View>
+  );
+}
+
+function TipCard({ text, colors }: { text?: string; colors: ReturnType<typeof useColors> }) {
+  if (!text) return null;
+  return (
+    <View style={[styles.tipCard, { backgroundColor: colors.goldBg, borderColor: colors.goldDark + '35' }]}>
+      <Ionicons name="bulb-outline" size={15} color={colors.goldDark} />
+      <Text style={[styles.tipText, { color: colors.foreground }]}>{text}</Text>
     </View>
   );
 }
@@ -382,14 +513,19 @@ const styles = StyleSheet.create({
   sectionIcon: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   sectionTitle: { fontSize: 15, fontFamily: 'Inter_700Bold' },
   sectionHint: { fontSize: 10, marginTop: 2, fontFamily: 'Inter_400Regular' },
-  field: { flex: 1, marginBottom: 12 },
+  field: { marginBottom: 12 },
   label: { fontSize: 11, fontFamily: 'Inter_600SemiBold', marginBottom: 6 },
   input: { height: 44, borderWidth: 1, borderRadius: 10, paddingHorizontal: 11, fontSize: 12, fontFamily: 'Inter_400Regular' },
+  multilineInput: { height: 82, paddingTop: 11, paddingBottom: 11 },
   twoColumns: { flexDirection: 'row', gap: 10 },
   column: { flex: 1 },
   chipRow: { gap: 7, paddingBottom: 4 },
   chip: { borderWidth: 1, borderRadius: 9, paddingHorizontal: 10, paddingVertical: 8 },
   chipText: { fontSize: 10, fontFamily: 'Inter_600SemiBold' },
+  catalogNote: { fontSize: 10, lineHeight: 15, marginTop: 2, marginBottom: 10, fontFamily: 'Inter_400Regular' },
+  fieldHint: { fontSize: 10, lineHeight: 15, marginTop: -2, marginBottom: 7, fontFamily: 'Inter_400Regular' },
+  tipCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 8, borderWidth: 1, borderRadius: 11, padding: 10, marginTop: 2 },
+  tipText: { flex: 1, fontSize: 10, lineHeight: 15, fontFamily: 'Inter_500Medium' },
   switchRow: { flexDirection: 'row', alignItems: 'center', gap: 10, paddingTop: 2 },
   switchTitle: { fontSize: 12, fontFamily: 'Inter_600SemiBold' },
   switchHint: { fontSize: 10, marginTop: 2, lineHeight: 14, fontFamily: 'Inter_400Regular' },

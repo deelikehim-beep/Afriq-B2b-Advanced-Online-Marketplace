@@ -28,6 +28,10 @@ export interface Product {
   supplierDeals: number;
   location: string;
   country?: string;        // ISO country code e.g. 'NG', 'GH'
+  brand?: string;
+  brandId?: string;
+  model?: string;
+  modelId?: string;
   image: string;
   images?: string[];       // multi-image gallery
   videoUrl?: string;       // optional video (use 'demo' for demo mode)
@@ -35,12 +39,21 @@ export interface Product {
   reviews: number;
   sold: number;
   description: string;
+  specifications?: ProductSpecification[];
+  condition?: string;
+  problems?: string[];
+  problemDescription?: string;
   variants: string[];
   delivery: string;
   escrow: boolean;
   bulkPricing: BulkTier[];
   featured?: boolean;
   badge?: string;
+}
+
+export interface ProductSpecification {
+  label: string;
+  value: string;
 }
 
 // ─── African Countries ────────────────────────────────────────
@@ -234,7 +247,9 @@ export interface ProductListingDraft {
   category: string;
   subcategory: string;
   type: string;
+  brandId: string;
   brand: string;
+  modelId: string;
   model: string;
   price: number;
   moq: number;
@@ -244,6 +259,10 @@ export interface ProductListingDraft {
   images: string[];
   delivery: string;
   escrow: boolean;
+  specifications: ProductSpecification[];
+  condition: string;
+  problems: string[];
+  problemDescription: string;
 }
 export interface AppUser {
   id: string;
@@ -875,6 +894,138 @@ export function getCategoryTaxonomy(categoryId: string): CategoryTaxonomy {
   return CATEGORY_TAXONOMY[categoryId] ?? genericTaxonomy(categoryId, ['Popular Products', 'Trade Supplies', 'Professional Range']);
 }
 
+export interface ProductAttributeField {
+  key: string;
+  label: string;
+  placeholder: string;
+}
+
+const DEFAULT_PRODUCT_FIELDS: ProductAttributeField[] = [
+  { key: 'size', label: 'Size / capacity', placeholder: 'e.g. Medium, 5L, 50kg' },
+  { key: 'material', label: 'Material / composition', placeholder: 'e.g. Cotton, stainless steel, leather' },
+  { key: 'color', label: 'Color / finish', placeholder: 'e.g. Black, natural, mixed colors' },
+];
+
+export function getProductAttributeFields(categoryId: string, typeId: string): ProductAttributeField[] {
+  if (categoryId === 'electronics' && typeId === 'smartphones') {
+    return [
+      { key: 'displaySize', label: 'Display size', placeholder: 'e.g. 6.1 inches' },
+      { key: 'storage', label: 'Storage space', placeholder: 'e.g. 128GB, 256GB' },
+      { key: 'ram', label: 'RAM', placeholder: 'e.g. 4GB, 6GB' },
+      { key: 'batteryHealth', label: 'Battery health', placeholder: 'e.g. 92% or new battery' },
+      { key: 'network', label: 'Network / SIM', placeholder: 'e.g. Unlocked, Dual SIM, 5G' },
+    ];
+  }
+  if (categoryId === 'electronics' && typeId === 'laptops') {
+    return [
+      { key: 'displaySize', label: 'Display size', placeholder: 'e.g. 14 inches' },
+      { key: 'processor', label: 'Processor', placeholder: 'e.g. Core i5 11th Gen' },
+      { key: 'storage', label: 'Storage space', placeholder: 'e.g. 512GB SSD' },
+      { key: 'ram', label: 'RAM', placeholder: 'e.g. 16GB' },
+      { key: 'batteryHealth', label: 'Battery / power', placeholder: 'e.g. 5 hours or new battery' },
+    ];
+  }
+  if (categoryId === 'electronics' && typeId === 'tablets') {
+    return [
+      { key: 'displaySize', label: 'Display size', placeholder: 'e.g. 10.2 inches' },
+      { key: 'storage', label: 'Storage space', placeholder: 'e.g. 64GB, 256GB' },
+      { key: 'ram', label: 'RAM', placeholder: 'e.g. 4GB' },
+      { key: 'network', label: 'Network / SIM', placeholder: 'e.g. Wi-Fi, 4G LTE' },
+    ];
+  }
+  if (categoryId === 'electronics') {
+    return [
+      { key: 'displaySize', label: 'Display / output size', placeholder: 'e.g. 55 inches, 1080p' },
+      { key: 'power', label: 'Power / capacity', placeholder: 'e.g. 2000W, 10,000mAh' },
+      { key: 'connectivity', label: 'Connectivity', placeholder: 'e.g. Bluetooth, HDMI, Wi-Fi' },
+      { key: 'warranty', label: 'Warranty', placeholder: 'e.g. 12 months' },
+    ];
+  }
+  if (categoryId === 'auto') {
+    return [
+      { key: 'compatibility', label: 'Fits / compatibility', placeholder: 'e.g. Toyota Corolla 2008–2013' },
+      { key: 'partNumber', label: 'Part number / specification', placeholder: 'e.g. 04465-02390' },
+      { key: 'material', label: 'Material / grade', placeholder: 'e.g. OEM ceramic' },
+      { key: 'warranty', label: 'Warranty', placeholder: 'e.g. 6 months' },
+    ];
+  }
+  if (['agriculture', 'food'].includes(categoryId)) {
+    return [
+      { key: 'grade', label: 'Grade / quality', placeholder: 'e.g. Premium, Grade A' },
+      { key: 'packSize', label: 'Pack size', placeholder: 'e.g. 50kg bag, 25L can' },
+      { key: 'origin', label: 'Origin', placeholder: 'e.g. Kebbi, Nigeria' },
+      { key: 'shelfLife', label: 'Shelf life / harvest', placeholder: 'e.g. 12 months, 2026 harvest' },
+    ];
+  }
+  if (['beauty', 'health'].includes(categoryId)) {
+    return [
+      { key: 'size', label: 'Size / volume', placeholder: 'e.g. 500ml, 100 pieces' },
+      { key: 'ingredients', label: 'Ingredients / material', placeholder: 'e.g. Shea butter, cotton' },
+      { key: 'expiry', label: 'Expiry / best before', placeholder: 'e.g. December 2027' },
+      { key: 'certification', label: 'Certification', placeholder: 'e.g. NAFDAC, CE, organic' },
+    ];
+  }
+  if (['home', 'office', 'fashion', 'textiles'].includes(categoryId)) {
+    return [
+      { key: 'material', label: 'Material / fabric', placeholder: 'e.g. Cotton, wood, leather' },
+      { key: 'size', label: 'Size / dimensions', placeholder: 'e.g. 6 yards, 120 × 60cm' },
+      { key: 'color', label: 'Color / finish', placeholder: 'e.g. Navy blue, matte black' },
+      { key: 'care', label: 'Care / assembly', placeholder: 'e.g. Easy wash, assembly required' },
+    ];
+  }
+  if (['construction', 'machinery', 'energy'].includes(categoryId)) {
+    return [
+      { key: 'capacity', label: 'Capacity / output', placeholder: 'e.g. 10KVA, 500kg per hour' },
+      { key: 'material', label: 'Material / grade', placeholder: 'e.g. Grade 42.5R, steel' },
+      { key: 'dimensions', label: 'Dimensions / weight', placeholder: 'e.g. 2m × 1m, 40kg' },
+      { key: 'warranty', label: 'Warranty / service', placeholder: 'e.g. 12 months, installation included' },
+    ];
+  }
+  return DEFAULT_PRODUCT_FIELDS;
+}
+
+export function getCommonProductProblems(categoryId: string, typeId: string): string[] {
+  if (categoryId === 'electronics' && ['smartphones', 'tablets'].includes(typeId)) {
+    return ['Screen scratches/cracks', 'Battery health below 85%', 'Face ID / fingerprint issue', 'Camera issue', 'Speaker or microphone issue', 'Charging port issue', 'Network locked', 'Water damage', 'Body dents'];
+  }
+  if (categoryId === 'electronics') {
+    return ['Screen/display issue', 'Battery issue', 'Sound issue', 'Ports or connectivity issue', 'Remote/accessory missing', 'Body damage'];
+  }
+  if (categoryId === 'auto') {
+    return ['Used part', 'Cosmetic damage', 'Wear and tear', 'Needs repair', 'Missing fitting/accessories'];
+  }
+  return ['Cosmetic damage', 'Used / refurbished', 'Missing accessory', 'Needs repair', 'Packaging damage'];
+}
+
+export function getSellerTips(categoryId: string, typeId: string): string[] {
+  if (categoryId === 'electronics' && ['smartphones', 'tablets'].includes(typeId)) {
+    return [
+      'Select the exact brand and model so buyers can find you even when you have zero stock today.',
+      'Always state storage, RAM, battery health and whether the phone is unlocked.',
+      'Choose None under problems only after checking the screen, cameras, charging and network.',
+    ];
+  }
+  if (categoryId === 'electronics') {
+    return [
+      'Use the exact model from the catalog and fill the technical fields buyers compare most.',
+      'Add clear photos of the front, back, serial label and any defect.',
+      'State warranty and included accessories to reduce buyer questions.',
+    ];
+  }
+  if (categoryId === 'food' || categoryId === 'agriculture') {
+    return [
+      'State the grade, pack size, origin and harvest or expiry information clearly.',
+      'Use photos that show the actual packaging and product quality.',
+      'Give a realistic delivery window so buyers can plan stock replenishment.',
+    ];
+  }
+  return [
+    'Choose the closest catalog model instead of creating a new spelling; buyers search these saved models.',
+    'Complete the product information fields buyers use to compare quality and fit.',
+    'Use clear photos, honest condition notes and a delivery promise you can keep.',
+  ];
+}
+
 // ─── Products ────────────────────────────────────────────────
 export const PRODUCTS: Product[] = [
   {
@@ -1175,9 +1326,19 @@ export const PRODUCTS: Product[] = [
     price: 450000, moq: 3, unit: 'units', stock: 80,
     supplier: 'Lagos iPhone Hub', supplierId: 'sup_023', supplierTrust: 87, supplierDeals: 345,
     location: 'VI, Lagos', country: 'NG',
+    brand: 'Apple', brandId: 'apple-iphone', model: 'iPhone 14 Pro Max', modelId: 'apple-iphone-4',
     image: 'https://images.unsplash.com/photo-1663499482523-1c0c1bae4ce1?w=500&q=80',
     rating: 4.5, reviews: 43, sold: 280,
     description: 'Grade A refurbished iPhone 14 Pro Max. 256GB, 6.7-inch Super Retina display. Battery health 90%+. 6-month warranty.',
+    specifications: [
+      { label: 'Display size', value: '6.7 inches' },
+      { label: 'Storage space', value: '256GB' },
+      { label: 'RAM', value: '6GB' },
+      { label: 'Battery health', value: '90%+' },
+      { label: 'Network / SIM', value: 'Unlocked · 5G · Dual SIM' },
+    ],
+    condition: 'Refurbished',
+    problems: [],
     variants: ['128GB Space Black', '256GB Deep Purple', '512GB Gold'],
     delivery: '1–2 days', escrow: true,
     bulkPricing: [{ qty: 10, price: 430000 }],

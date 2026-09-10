@@ -53,6 +53,16 @@ export default function BusinessSuite() {
           </View>
           <Ionicons name="chevron-forward" size={19} color={colors.brand} />
         </TouchableOpacity>
+        <View style={[styles.tipsCard, { backgroundColor: colors.goldBg, borderColor: colors.goldDark + '35' }]}>
+          <View style={[styles.tipsIcon, { backgroundColor: colors.card }]}>
+            <Ionicons name="bulb-outline" size={19} color={colors.goldDark} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={[styles.tipsTitle, { color: colors.foreground }]}>Seller tips</Text>
+            <Text style={[styles.tipsText, { color: colors.foreground }]}>Use the saved brand and model, show the exact condition, disclose every known problem, and use clear photos of the actual stock.</Text>
+            <Text style={[styles.tipsText, { color: colors.mutedForeground }]}>Accurate details help buyers compare quickly and reduce returns or repeated questions.</Text>
+          </View>
+        </View>
         <View style={styles.sectionHead}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Operations</Text><Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>Tap a module to preview</Text></View>
         <View style={styles.grid}>
           {MODULES.map(module => (
@@ -106,4 +116,8 @@ const styles = StyleSheet.create({
   listCtaIcon: { width: 46, height: 46, borderRadius: 14, alignItems: 'center', justifyContent: 'center' },
   listCtaTitle: { fontSize: 15, fontFamily: 'Inter_700Bold' },
   listCtaDesc: { fontSize: 11, lineHeight: 16, marginTop: 3, fontFamily: 'Inter_400Regular' },
+  tipsCard: { flexDirection: 'row', alignItems: 'flex-start', gap: 10, borderRadius: 15, borderWidth: 1, padding: 13, marginBottom: 22 },
+  tipsIcon: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
+  tipsTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', marginBottom: 4 },
+  tipsText: { fontSize: 10, lineHeight: 15, fontFamily: 'Inter_400Regular', marginBottom: 4 },
 });
