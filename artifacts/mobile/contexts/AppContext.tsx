@@ -33,7 +33,8 @@ interface AppContextType {
   moveSavedToCart: (item: CartItem) => void;
   isSaved: (productId: string, variant?: string) => boolean;
   updateUserProfile: (updates: Partial<AppUser>) => void;
-  createProductListing: (draft: ProductListingDraft) => Promise<{ ok: boolean; error?: string; product?: Product }>;
+  createProductListing: (draft: ProductListingDraft, listingId?: string) => Promise<{ ok: boolean; error?: string; product?: Product }>;
+  setProductListingStatus: (listingId: string, status: 'active' | 'closed') => Promise<{ ok: boolean; error?: string; product?: Product }>;
   toggleFollowSupplier: (supplierId: string) => void;
   startProductConversation: (product: Product) => string;
   clearCart: () => void;
@@ -114,6 +115,26 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   }, [isLoggedIn]);
 
   useEffect(() => {
+    if (!isLoggedIn) {
+      setListedProducts([]);
+      return;
+    }
+    let cancelled = false;
+    const loadSellerListings = async () => {
+      const token = await getToken();
+      const domain = process.env.EXPO_PUBLIC_DOMAIN;
+      const response = await fetch(`${domain ? `https://${domain}` : ''}/api/marketplace/my-listings`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
+      if (!response.ok || cancelled) return;
+      const payload = await response.json() as { listings?: Product[] };
+      if (!cancelled) setListedProducts(payload.listings ?? []);
+    };
+    loadSellerListings().catch(() => {});
+    return () => { cancelled = true; };
+  }, [isLoggedIn, getToken]);
+
+  useEffect(() => {
     if (!isLoggedIn || !hydrated) return;
     const timer = setTimeout(async () => {
       const token = await getToken();
@@ -134,7 +155,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const cartTotal = cart.reduce((s, i) => s + i.price * i.qty, 0);
   const unreadMessages = conversations.reduce((s, c) => s + c.unread, 0);
   const unreadNotifs = notifications.filter(n => !n.read).length;
-  const allMarketplaceProducts = [...marketplaceProducts, ...listedProducts, ...PRODUCTS];
+  const allMarketplaceProducts = [
+    ...marketplaceProducts,
+    ...listedProducts.filter(product => product.status !== 'closed'),
+    ...PRODUCTS,
+  ];
   const getProductStock = (productId: string) => allMarketplaceProducts.find(product => product.id === productId)?.stock ?? 0;
 
   const addToCart = (item: CartItem) => {
@@ -187,7 +212,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setUser(prev => ({ ...prev, ...updates }));
   };
 
-  const createProductListing = async (draft: ProductListingDraft) => {
+  const createProductListing = async (draft: ProductListingDraft, listingId?: string) => {
     if (user.role !== 'seller') {
       return { ok: false, error: 'Only seller accounts can publish goods. Update your account role before listing.' };
     }
@@ -230,6 +255,10 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       supplierDeals: user.totalDeals,
       location: user.storeLocation?.trim() || user.location,
       country: user.residentCountryCode,
+      subcategory: draft.subcategory,
+      subcategoryId: draft.subcategoryId,
+      type: draft.type,
+      typeId: draft.typeId,
       brand: draft.brand.trim(),
       brandId: draft.brandId,
       model: draft.model.trim(),
@@ -248,13 +277,14 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       delivery: draft.delivery.trim() || 'Delivery arranged with seller',
       escrow: draft.escrow,
       bulkPricing: [],
+      status: 'active',
     };
     const token = await getToken();
     const domain = process.env.EXPO_PUBLIC_DOMAIN;
     let response: Response;
     try {
-      response = await fetch(`${domain ? `https://${domain}` : ''}/api/marketplace/listings`, {
-        method: 'POST',
+      response = await fetch(`${domain ? `https://${domain}` : ''}/api/marketplace/listings${listingId ? `/${encodeURIComponent(listingId)}` : ''}`, {
+        method: listingId ? 'PATCH' : 'POST',
         headers: {
           'Content-Type': 'application/json',
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
@@ -268,9 +298,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       const payload = await response.json().catch(() => null) as { message?: string } | null;
       return { ok: false, error: payload?.message ?? 'The listing could not be published. Please try again.' };
     }
-    setListedProducts(prev => [product, ...prev]);
-    setMarketplaceProducts(prev => [product, ...prev.filter(item => item.id !== product.id)]);
-    return { ok: true, product };
+    const savedProduct = (await response.json().catch(() => ({ product }))).product as Product;
+    setListedProducts(prev => listingId
+      ? prev.map(item => item.id === savedProduct.id ? savedProduct : item)
+      : [savedProduct, ...prev.filter(item => item.id !== savedProduct.id)]);
+    setMarketplaceProducts(prev => [savedProduct, ...prev.filter(item => item.id !== savedProduct.id)]);
+    return { ok: true, product: savedProduct };
+  };
+
+  const setProductListingStatus = async (listingId: string, status: 'active' | 'closed') => {
+    const token = await getToken();
+    const domain = process.env.EXPO_PUBLIC_DOMAIN;
+    let response: Response;
+    try {
+      response = await fetch(`${domain ? `https://${domain}` : ''}/api/marketplace/listings/${encodeURIComponent(listingId)}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ status }),
+      });
+    } catch {
+      return { ok: false, error: 'The marketplace could not be reached. Check your connection and try again.' };
+    }
+    if (!response.ok) {
+      const payload = await response.json().catch(() => null) as { message?: string } | null;
+      return { ok: false, error: payload?.message ?? 'The listing status could not be changed.' };
+    }
+    const payload = await response.json() as { product: Product };
+    const savedProduct = payload.product;
+    setListedProducts(prev => prev.map(item => item.id === listingId ? savedProduct : item));
+    setMarketplaceProducts(prev => status === 'closed'
+      ? prev.filter(item => item.id !== listingId)
+      : [savedProduct, ...prev.filter(item => item.id !== listingId)]);
+    return { ok: true, product: savedProduct };
   };
 
   const toggleFollowSupplier = (supplierId: string) => {
@@ -468,7 +530,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
        user, cart, savedItems, followedSuppliers, orders, conversations, transactions, notifications, listedProducts, marketplaceProducts,
       cartCount, cartTotal, unreadMessages, unreadNotifs,
         addToCart, removeFromCart, updateCartQty, getProductStock, saveItem, removeSavedItem, moveSavedToCart, isSaved,
-       updateUserProfile, createProductListing, toggleFollowSupplier, startProductConversation, clearCart,
+       updateUserProfile, createProductListing, setProductListingStatus, toggleFollowSupplier, startProductConversation, clearCart,
       placeOrder, confirmDelivery,
       sendMessage, markMessagesRead,
       markNotifRead, markAllNotifsRead,

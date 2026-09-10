@@ -1,7 +1,8 @@
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
 import React from 'react';
-import { ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Alert, ScrollView, StatusBar, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useColors } from '@/hooks/useColors';
 import { useApp } from '@/contexts/AppContext';
@@ -19,13 +20,28 @@ export default function BusinessSuite() {
   const colors = useColors();
   const router = useRouter();
   const insets = useSafeAreaInsets();
-  const { user } = useApp();
+  const { user, listedProducts, setProductListingStatus } = useApp();
+  const activeListings = listedProducts.filter(product => product.status !== 'closed');
   const openListing = () => {
     if (user.role === 'seller' && (!user.storeAddress?.trim() || !user.residentCountry?.trim())) {
       router.push('/(tabs)/profile?edit=business' as any);
       return;
     }
     router.push('/list-product' as any);
+  };
+  const changeListingStatus = async (productId: string, status: 'active' | 'closed') => {
+    const result = await setProductListingStatus(productId, status);
+    if (!result.ok) Alert.alert('Could not update listing', result.error ?? 'Please try again.');
+  };
+  const closeListing = (productId: string, productName: string) => {
+    Alert.alert(
+      'Close this product ad?',
+      `${productName} will disappear from buyer search, but you can reopen it later.`,
+      [
+        { text: 'Keep it open', style: 'cancel' },
+        { text: 'Close ad', style: 'destructive', onPress: () => { void changeListingStatus(productId, 'closed'); } },
+      ],
+    );
   };
   return (
     <View style={[styles.container, { backgroundColor: colors.background, paddingTop: insets.top }]}>
@@ -63,6 +79,56 @@ export default function BusinessSuite() {
             <Text style={[styles.tipsText, { color: colors.mutedForeground }]}>Accurate details help buyers compare quickly and reduce returns or repeated questions.</Text>
           </View>
         </View>
+        <View style={styles.sectionHead}>
+          <Text style={[styles.sectionTitle, { color: colors.foreground }]}>My product ads</Text>
+          <Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>{activeListings.length} open · {listedProducts.length} total</Text>
+        </View>
+        {listedProducts.length === 0 ? (
+          <View style={[styles.emptyListings, { backgroundColor: colors.card, borderColor: colors.border }]}>
+            <Ionicons name="cube-outline" size={25} color={colors.mutedForeground} />
+            <Text style={[styles.emptyListingsTitle, { color: colors.foreground }]}>No product ads yet</Text>
+            <Text style={[styles.emptyListingsText, { color: colors.mutedForeground }]}>Products you publish will appear here so you can edit or close them.</Text>
+          </View>
+        ) : (
+          <View style={styles.listings}>
+            {listedProducts.map(product => {
+              const closed = product.status === 'closed';
+              return (
+                <View key={product.id} style={[styles.listingCard, { backgroundColor: colors.card, borderColor: closed ? colors.border : colors.brandLight, opacity: closed ? 0.78 : 1 }]}>
+                  <Image source={{ uri: product.image }} style={styles.listingImage} contentFit="cover" />
+                  <View style={styles.listingBody}>
+                    <View style={styles.listingTitleRow}>
+                      <Text numberOfLines={2} style={[styles.listingTitle, { color: colors.foreground }]}>{product.name}</Text>
+                      <View style={[styles.statusPill, { backgroundColor: closed ? colors.background : colors.brandBg }]}>
+                        <Text style={[styles.statusText, { color: closed ? colors.mutedForeground : colors.brand }]}>{closed ? 'Closed' : 'Open'}</Text>
+                      </View>
+                    </View>
+                    <Text style={[styles.listingMeta, { color: colors.mutedForeground }]}>
+                      {product.model ?? 'Catalog product'} · {product.stock.toLocaleString()} {product.unit} · ₦{product.price.toLocaleString('en-NG')}
+                    </Text>
+                    <View style={styles.listingActions}>
+                      <TouchableOpacity style={[styles.editButton, { borderColor: colors.border }]} onPress={() => router.push(`/list-product?edit=${encodeURIComponent(product.id)}` as any)}>
+                        <Ionicons name="create-outline" size={14} color={colors.brand} />
+                        <Text style={[styles.editButtonText, { color: colors.brand }]}>Edit</Text>
+                      </TouchableOpacity>
+                      {closed ? (
+                        <TouchableOpacity style={[styles.openButton, { backgroundColor: colors.brand }]} onPress={() => { void changeListingStatus(product.id, 'active'); }}>
+                          <Ionicons name="eye-outline" size={14} color="#ffffff" />
+                          <Text style={styles.openButtonText}>Reopen ad</Text>
+                        </TouchableOpacity>
+                      ) : (
+                        <TouchableOpacity style={[styles.closeButton, { borderColor: '#fecaca' }]} onPress={() => closeListing(product.id, product.name)}>
+                          <Ionicons name="eye-off-outline" size={14} color="#b91c1c" />
+                          <Text style={styles.closeButtonText}>Close ad</Text>
+                        </TouchableOpacity>
+                      )}
+                    </View>
+                  </View>
+                </View>
+              );
+            })}
+          </View>
+        )}
         <View style={styles.sectionHead}><Text style={[styles.sectionTitle, { color: colors.foreground }]}>Operations</Text><Text style={[styles.sectionHint, { color: colors.mutedForeground }]}>Tap a module to preview</Text></View>
         <View style={styles.grid}>
           {MODULES.map(module => (
@@ -120,4 +186,23 @@ const styles = StyleSheet.create({
   tipsIcon: { width: 36, height: 36, borderRadius: 11, alignItems: 'center', justifyContent: 'center' },
   tipsTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', marginBottom: 4 },
   tipsText: { fontSize: 10, lineHeight: 15, fontFamily: 'Inter_400Regular', marginBottom: 4 },
+  listings: { gap: 10, marginBottom: 22 },
+  listingCard: { flexDirection: 'row', gap: 11, borderRadius: 14, borderWidth: 1, padding: 10 },
+  listingImage: { width: 70, height: 70, borderRadius: 10 },
+  listingBody: { flex: 1, minWidth: 0 },
+  listingTitleRow: { flexDirection: 'row', alignItems: 'flex-start', gap: 6 },
+  listingTitle: { flex: 1, fontSize: 12, lineHeight: 16, fontFamily: 'Inter_700Bold' },
+  statusPill: { borderRadius: 8, paddingHorizontal: 6, paddingVertical: 3 },
+  statusText: { fontSize: 9, fontFamily: 'Inter_700Bold' },
+  listingMeta: { fontSize: 10, lineHeight: 14, marginTop: 4, fontFamily: 'Inter_400Regular' },
+  listingActions: { flexDirection: 'row', gap: 7, marginTop: 8 },
+  editButton: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
+  editButtonText: { fontSize: 10, fontFamily: 'Inter_700Bold' },
+  openButton: { flexDirection: 'row', alignItems: 'center', gap: 4, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
+  openButtonText: { color: '#ffffff', fontSize: 10, fontFamily: 'Inter_700Bold' },
+  closeButton: { flexDirection: 'row', alignItems: 'center', gap: 4, borderWidth: 1, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 6 },
+  closeButtonText: { color: '#b91c1c', fontSize: 10, fontFamily: 'Inter_700Bold' },
+  emptyListings: { alignItems: 'center', borderWidth: 1, borderRadius: 14, padding: 22, marginBottom: 22 },
+  emptyListingsTitle: { fontSize: 13, fontFamily: 'Inter_700Bold', marginTop: 8 },
+  emptyListingsText: { fontSize: 10, lineHeight: 15, textAlign: 'center', marginTop: 4, fontFamily: 'Inter_400Regular' },
 });

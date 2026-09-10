@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { Image } from 'expo-image';
 import { useRouter } from 'expo-router';
-import React, { useMemo, useState } from 'react';
+import { useLocalSearchParams } from 'expo-router';
+import React, { useEffect, useMemo, useState } from 'react';
 import {
   Alert,
   KeyboardAvoidingView,
@@ -75,8 +76,11 @@ function ChoiceChips({
 export default function ListProduct() {
   const colors = useColors();
   const router = useRouter();
+  const { edit } = useLocalSearchParams<{ edit?: string }>();
   const insets = useSafeAreaInsets();
-  const { user, createProductListing } = useApp();
+  const { user, listedProducts, createProductListing } = useApp();
+  const listingId = typeof edit === 'string' ? edit : '';
+  const editingProduct = listedProducts.find(product => product.id === listingId);
   const [categoryId, setCategoryId] = useState('textiles');
   const [subcategoryId, setSubcategoryId] = useState('');
   const [typeId, setTypeId] = useState('');
@@ -108,6 +112,44 @@ export default function ListProduct() {
   const sellerTips = getSellerTips(categoryId, activeType?.id ?? '');
   const profileComplete = hasCompleteSellerProfile(user);
   const categoryName = CATEGORIES.find(item => item.id === categoryId)?.name ?? categoryId;
+
+  useEffect(() => {
+    if (!editingProduct) return;
+    const productTaxonomy = getCategoryTaxonomy(editingProduct.category);
+    const resolvedSubcategory = productTaxonomy.subcategories.find(item =>
+      item.id === editingProduct.subcategoryId || item.name === editingProduct.subcategory,
+    ) ?? productTaxonomy.subcategories[0];
+    const resolvedType = resolvedSubcategory?.types.find(item =>
+      item.id === editingProduct.typeId || item.name === editingProduct.type,
+    ) ?? resolvedSubcategory?.types[0];
+    const resolvedBrand = resolvedType?.brands.find(item => item.id === editingProduct.brandId || item.name === editingProduct.brand)
+      ?? resolvedType?.brands[0];
+    const resolvedModel = resolvedBrand?.models.find(item => item.id === editingProduct.modelId || item.name === editingProduct.model)
+      ?? resolvedBrand?.models[0];
+    const fields = getProductAttributeFields(editingProduct.category, resolvedType?.id ?? '');
+
+    setCategoryId(editingProduct.category);
+    setSubcategoryId(resolvedSubcategory?.id ?? '');
+    setTypeId(resolvedType?.id ?? '');
+    setBrandId(resolvedBrand?.id ?? '');
+    setModelId(resolvedModel?.id ?? '');
+    setName(editingProduct.name);
+    setPrice(String(editingProduct.price));
+    setMoq(String(editingProduct.moq));
+    setUnit(editingProduct.unit);
+    setStock(String(editingProduct.stock));
+    setVariants(editingProduct.variants.join(', '));
+    setDelivery(editingProduct.delivery);
+    setEscrow(editingProduct.escrow);
+    setImages(editingProduct.images?.length ? editingProduct.images : [editingProduct.image]);
+    setCondition(editingProduct.condition ?? 'New');
+    setProblems(editingProduct.problems ?? []);
+    setProblemDescription(editingProduct.problemDescription ?? '');
+    setSpecificationValues(Object.fromEntries(fields.map(field => [
+      field.key,
+      editingProduct.specifications?.find(specification => specification.label === field.label)?.value ?? '',
+    ])));
+  }, [editingProduct?.id]);
 
   const selectCategory = (id: string) => {
     setCategoryId(id);
@@ -196,7 +238,9 @@ export default function ListProduct() {
       name,
       category: categoryId,
       subcategory: activeSubcategory?.name ?? '',
+      subcategoryId: activeSubcategory?.id ?? '',
       type: activeType?.name ?? '',
+      typeId: activeType?.id ?? '',
       brandId: activeBrand?.id ?? '',
       brand: selectedBrand,
       modelId: activeModel?.id ?? '',
@@ -216,14 +260,18 @@ export default function ListProduct() {
     };
     setSubmitting(true);
     try {
-      const result = await createProductListing(draft);
+      const result = await createProductListing(draft, listingId || undefined);
       if (!result.ok) {
         Alert.alert('Listing needs attention', result.error ?? 'Review the listing details and try again.');
         return;
       }
-      Alert.alert('Product listed', 'Your good is now published and searchable on the AFRIQ marketplace.', [
+      Alert.alert(
+        listingId ? 'Listing updated' : 'Product listed',
+        listingId ? 'Your changes are now visible to buyers.' : 'Your good is now published and searchable on the AFRIQ marketplace.',
+        [
         { text: 'Done', onPress: () => router.back() },
-      ]);
+        ],
+      );
     } catch (error) {
       Alert.alert(
         'Could not publish',
@@ -245,11 +293,11 @@ export default function ListProduct() {
           <Ionicons name="arrow-back" size={22} color={colors.foreground} />
         </TouchableOpacity>
         <View style={{ flex: 1 }}>
-          <Text style={[styles.headerTitle, { color: colors.foreground }]}>List a product</Text>
-          <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>Create a public wholesale listing</Text>
+          <Text style={[styles.headerTitle, { color: colors.foreground }]}>{listingId ? 'Edit listing' : 'List a product'}</Text>
+          <Text style={[styles.headerSubtitle, { color: colors.mutedForeground }]}>{listingId ? 'Update your public wholesale listing' : 'Create a public wholesale listing'}</Text>
         </View>
         <View style={[styles.stepPill, { backgroundColor: colors.brandBg }]}>
-          <Text style={[styles.stepPillText, { color: colors.brandDark }]}>1 of 1</Text>
+          <Text style={[styles.stepPillText, { color: colors.brandDark }]}>{listingId ? 'EDIT' : '1 of 1'}</Text>
         </View>
       </View>
 
@@ -436,7 +484,7 @@ export default function ListProduct() {
 
         <TouchableOpacity disabled={submitting} style={[styles.submitButton, { backgroundColor: colors.brand, opacity: submitting ? 0.65 : 1 }]} onPress={handleSubmit} activeOpacity={0.85}>
           <Ionicons name={submitting ? 'time-outline' : 'checkmark-circle-outline'} size={21} color="#ffffff" />
-          <Text style={styles.submitText}>{submitting ? 'Publishing…' : user.role === 'seller' ? 'Publish product' : 'Seller account required'}</Text>
+          <Text style={styles.submitText}>{submitting ? (listingId ? 'Saving…' : 'Publishing…') : user.role === 'seller' ? (listingId ? 'Save changes' : 'Publish product') : 'Seller account required'}</Text>
         </TouchableOpacity>
         <Text style={[styles.submitHint, { color: colors.mutedForeground }]}>
           {user.role === 'seller' && profileComplete

@@ -28,6 +28,10 @@ export interface Product {
   supplierDeals: number;
   location: string;
   country?: string;        // ISO country code e.g. 'NG', 'GH'
+  subcategory?: string;
+  subcategoryId?: string;
+  type?: string;
+  typeId?: string;
   brand?: string;
   brandId?: string;
   model?: string;
@@ -43,6 +47,7 @@ export interface Product {
   condition?: string;
   problems?: string[];
   problemDescription?: string;
+  status?: 'active' | 'closed';
   variants: string[];
   delivery: string;
   escrow: boolean;
@@ -246,7 +251,9 @@ export interface ProductListingDraft {
   name: string;
   category: string;
   subcategory: string;
+  subcategoryId: string;
   type: string;
+  typeId: string;
   brandId: string;
   brand: string;
   modelId: string;
